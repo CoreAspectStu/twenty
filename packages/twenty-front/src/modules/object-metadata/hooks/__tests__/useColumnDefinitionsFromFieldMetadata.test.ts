@@ -2,14 +2,14 @@ import { renderHook } from '@testing-library/react';
 
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { useColumnDefinitionsFromFieldMetadata } from '@/object-metadata/hooks/useColumnDefinitionsFromFieldMetadata';
-import { ObjectMetadataItem } from '@/object-metadata/types/ObjectMetadataItem';
+import { type ObjectMetadataItem } from '@/object-metadata/types/ObjectMetadataItem';
 import {
   SubscriptionInterval,
   SubscriptionStatus,
   WorkspaceActivationStatus,
 } from '~/generated/graphql';
 import { getJestMetadataAndApolloMocksAndActionMenuWrapper } from '~/testing/jest/getJestMetadataAndApolloMocksAndActionMenuWrapper';
-import { generatedMockObjectMetadataItems } from '~/testing/mock-data/generatedMockObjectMetadataItems';
+import { generatedMockObjectMetadataItems } from '~/testing/utils/generatedMockObjectMetadataItems';
 
 const Wrapper = getJestMetadataAndApolloMocksAndActionMenuWrapper({
   apolloMocks: [],
@@ -47,6 +47,7 @@ const Wrapper = getJestMetadataAndApolloMocksAndActionMenuWrapper({
           metadata: {},
         },
       ],
+      isTwoFactorAuthenticationEnforced: false,
     });
   },
 });

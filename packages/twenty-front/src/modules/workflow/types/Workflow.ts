@@ -1,55 +1,25 @@
 import {
-  workflowActionSchema,
-  workflowCodeActionSchema,
-  workflowCodeActionSettingsSchema,
-  workflowCreateRecordActionSchema,
-  workflowCreateRecordActionSettingsSchema,
-  workflowCronTriggerSchema,
-  workflowDatabaseEventTriggerSchema,
-  workflowDeleteRecordActionSchema,
-  workflowDeleteRecordActionSettingsSchema,
-  workflowExecutorOutputSchema,
-  workflowFindRecordsActionSchema,
-  workflowFindRecordsActionSettingsSchema,
-  workflowFormActionSchema,
-  workflowFormActionSettingsSchema,
-  workflowHttpRequestActionSchema,
-  workflowManualTriggerSchema,
-  workflowRunContextSchema,
-  workflowRunOutputSchema,
-  workflowRunOutputStepsOutputSchema,
-  workflowRunSchema,
-  workflowRunStatusSchema,
-  workflowSendEmailActionSchema,
-  workflowSendEmailActionSettingsSchema,
-  workflowTriggerSchema,
-  workflowUpdateRecordActionSchema,
-  workflowUpdateRecordActionSettingsSchema,
-  workflowWebhookTriggerSchema,
+  type workflowAiAgentActionSchema,
+  type workflowCodeActionSchema,
+  type workflowCreateRecordActionSchema,
+  type workflowCronTriggerSchema,
+  type workflowDatabaseEventTriggerSchema,
+  type workflowDeleteRecordActionSchema,
+  type workflowFilterActionSchema,
+  type workflowFindRecordsActionSchema,
+  type workflowFormActionSchema,
+  type workflowHttpRequestActionSchema,
+  type workflowManualTriggerSchema,
+  type workflowRunSchema,
+  type workflowRunStateSchema,
+  type workflowRunStatusSchema,
+  type workflowRunStepStatusSchema,
+  type workflowSendEmailActionSchema,
+  type workflowTriggerSchema,
+  type workflowUpdateRecordActionSchema,
+  type workflowWebhookTriggerSchema,
 } from '@/workflow/validation-schemas/workflowSchema';
-import { z } from 'zod';
-
-export type WorkflowCodeActionSettings = z.infer<
-  typeof workflowCodeActionSettingsSchema
->;
-export type WorkflowSendEmailActionSettings = z.infer<
-  typeof workflowSendEmailActionSettingsSchema
->;
-export type WorkflowCreateRecordActionSettings = z.infer<
-  typeof workflowCreateRecordActionSettingsSchema
->;
-export type WorkflowUpdateRecordActionSettings = z.infer<
-  typeof workflowUpdateRecordActionSettingsSchema
->;
-export type WorkflowDeleteRecordActionSettings = z.infer<
-  typeof workflowDeleteRecordActionSettingsSchema
->;
-export type WorkflowFindRecordsActionSettings = z.infer<
-  typeof workflowFindRecordsActionSettingsSchema
->;
-export type WorkflowFormActionSettings = z.infer<
-  typeof workflowFormActionSettingsSchema
->;
+import { type z } from 'zod';
 
 export type WorkflowCodeAction = z.infer<typeof workflowCodeActionSchema>;
 export type WorkflowSendEmailAction = z.infer<
@@ -67,12 +37,26 @@ export type WorkflowDeleteRecordAction = z.infer<
 export type WorkflowFindRecordsAction = z.infer<
   typeof workflowFindRecordsActionSchema
 >;
+export type WorkflowFilterAction = z.infer<typeof workflowFilterActionSchema>;
 export type WorkflowFormAction = z.infer<typeof workflowFormActionSchema>;
 export type WorkflowHttpRequestAction = z.infer<
   typeof workflowHttpRequestActionSchema
 >;
 
-export type WorkflowAction = z.infer<typeof workflowActionSchema>;
+export type WorkflowAiAgentAction = z.infer<typeof workflowAiAgentActionSchema>;
+
+export type WorkflowAction =
+  | WorkflowCodeAction
+  | WorkflowSendEmailAction
+  | WorkflowCreateRecordAction
+  | WorkflowUpdateRecordAction
+  | WorkflowDeleteRecordAction
+  | WorkflowFindRecordsAction
+  | WorkflowFilterAction
+  | WorkflowFormAction
+  | WorkflowHttpRequestAction
+  | WorkflowAiAgentAction;
+
 export type WorkflowActionType = WorkflowAction['type'];
 export type WorkflowStep = WorkflowAction;
 export type WorkflowStepType = WorkflowStep['type'];
@@ -114,21 +98,19 @@ export type WorkflowVersion = {
   __typename: 'WorkflowVersion';
 };
 
-export type WorkflowRunOutput = z.infer<typeof workflowRunOutputSchema>;
-export type WorkflowExecutorOutput = z.infer<
-  typeof workflowExecutorOutputSchema
->;
-export type WorkflowRunOutputStepsOutput = z.infer<
-  typeof workflowRunOutputStepsOutputSchema
->;
-
-export type WorkflowRunContext = z.infer<typeof workflowRunContextSchema>;
-
-export type WorkflowRunFlow = WorkflowRunOutput['flow'];
+export type ManualTriggerWorkflowVersion = WorkflowVersion & {
+  trigger: WorkflowManualTrigger | null;
+};
 
 export type WorkflowRunStatus = z.infer<typeof workflowRunStatusSchema>;
 
 export type WorkflowRun = z.infer<typeof workflowRunSchema>;
+
+export type WorkflowRunState = z.infer<typeof workflowRunStateSchema>;
+
+export type WorkflowRunStepStatus = z.infer<typeof workflowRunStepStatusSchema>;
+
+export type WorkflowRunFlow = WorkflowRunState['flow'];
 
 export type Workflow = {
   __typename: 'Workflow';

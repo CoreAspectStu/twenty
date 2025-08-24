@@ -4,24 +4,23 @@ import { Key } from 'ts-key-enum';
 import { useObjectMetadataItemById } from '@/object-metadata/hooks/useObjectMetadataItemById';
 import { IconPicker } from '@/ui/input/components/IconPicker';
 import { Select } from '@/ui/input/components/Select';
-import { TextInputV2 } from '@/ui/input/components/TextInputV2';
+import { TextInput } from '@/ui/input/components/TextInput';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuHeader } from '@/ui/layout/dropdown/components/DropdownMenuHeader/DropdownMenuHeader';
 import { DropdownMenuHeaderLeftComponent } from '@/ui/layout/dropdown/components/DropdownMenuHeader/internal/DropdownMenuHeaderLeftComponent';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { DropdownMenuSeparator } from '@/ui/layout/dropdown/components/DropdownMenuSeparator';
-import { useScopedHotkeys } from '@/ui/utilities/hotkey/hooks/useScopedHotkeys';
-import { useSetHotkeyScope } from '@/ui/utilities/hotkey/hooks/useSetHotkeyScope';
-import { useRecoilComponentStateV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentStateV2';
-import { useRecoilComponentValueV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValueV2';
-import { useSetRecoilComponentStateV2 } from '@/ui/utilities/state/component-state/hooks/useSetRecoilComponentStateV2';
+import { useHotkeysOnFocusedElement } from '@/ui/utilities/hotkey/hooks/useHotkeysOnFocusedElement';
+import { useRecoilComponentState } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentState';
+import { useRecoilComponentValue } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValue';
+import { useSetRecoilComponentState } from '@/ui/utilities/state/component-state/hooks/useSetRecoilComponentState';
 import { viewObjectMetadataIdComponentState } from '@/views/states/viewObjectMetadataIdComponentState';
 import { ViewType, viewTypeIconMapping } from '@/views/types/ViewType';
-import { ViewsHotkeyScope } from '@/views/types/ViewsHotkeyScope';
 import { ViewPickerCreateButton } from '@/views/view-picker/components/ViewPickerCreateButton';
 import { ViewPickerIconAndNameContainer } from '@/views/view-picker/components/ViewPickerIconAndNameContainer';
 import { ViewPickerSaveButtonContainer } from '@/views/view-picker/components/ViewPickerSaveButtonContainer';
 import { ViewPickerSelectContainer } from '@/views/view-picker/components/ViewPickerSelectContainer';
+import { VIEW_PICKER_DROPDOWN_ID } from '@/views/view-picker/constants/ViewPickerDropdownId';
 import { VIEW_PICKER_KANBAN_FIELD_DROPDOWN_ID } from '@/views/view-picker/constants/ViewPickerKanbanFieldDropdownId';
 import { VIEW_PICKER_TYPE_SELECT_OPTIONS } from '@/views/view-picker/constants/ViewPickerTypeSelectOptions';
 import { VIEW_PICKER_VIEW_TYPE_DROPDOWN_ID } from '@/views/view-picker/constants/ViewPickerViewTypeDropdownId';
@@ -51,42 +50,41 @@ export const ViewPickerContentCreateMode = () => {
   const { viewPickerMode, setViewPickerMode } = useViewPickerMode();
   const [hasManuallySelectedIcon, setHasManuallySelectedIcon] = useState(false);
 
-  const viewObjectMetadataId = useRecoilComponentValueV2(
+  const viewObjectMetadataId = useRecoilComponentValue(
     viewObjectMetadataIdComponentState,
   );
   const { objectMetadataItem } = useObjectMetadataItemById({
     objectId: viewObjectMetadataId ?? '',
   });
 
-  const [viewPickerInputName, setViewPickerInputName] =
-    useRecoilComponentStateV2(viewPickerInputNameComponentState);
+  const [viewPickerInputName, setViewPickerInputName] = useRecoilComponentState(
+    viewPickerInputNameComponentState,
+  );
 
   const [viewPickerSelectedIcon, setViewPickerSelectedIcon] =
-    useRecoilComponentStateV2(viewPickerSelectedIconComponentState);
+    useRecoilComponentState(viewPickerSelectedIconComponentState);
 
-  const viewPickerIsPersisting = useRecoilComponentValueV2(
+  const viewPickerIsPersisting = useRecoilComponentValue(
     viewPickerIsPersistingComponentState,
   );
-  const setViewPickerIsDirty = useSetRecoilComponentStateV2(
+  const setViewPickerIsDirty = useSetRecoilComponentState(
     viewPickerIsDirtyComponentState,
   );
 
   const [viewPickerKanbanFieldMetadataId, setViewPickerKanbanFieldMetadataId] =
-    useRecoilComponentStateV2(viewPickerKanbanFieldMetadataIdComponentState);
+    useRecoilComponentState(viewPickerKanbanFieldMetadataIdComponentState);
 
-  const [viewPickerType, setViewPickerType] = useRecoilComponentStateV2(
+  const [viewPickerType, setViewPickerType] = useRecoilComponentState(
     viewPickerTypeComponentState,
   );
-
-  const setHotkeyScope = useSetHotkeyScope();
 
   const { createViewFromCurrentState } = useCreateViewFromCurrentState();
 
   const { availableFieldsForKanban } = useGetAvailableFieldsForKanban();
 
-  useScopedHotkeys(
-    Key.Enter,
-    async () => {
+  useHotkeysOnFocusedElement({
+    keys: [Key.Enter],
+    callback: async () => {
       if (viewPickerIsPersisting) {
         return;
       }
@@ -100,8 +98,14 @@ export const ViewPickerContentCreateMode = () => {
 
       await createViewFromCurrentState();
     },
-    ViewsHotkeyScope.ListDropdown,
-  );
+    focusId: VIEW_PICKER_DROPDOWN_ID,
+    dependencies: [
+      viewPickerIsPersisting,
+      createViewFromCurrentState,
+      viewPickerType,
+      availableFieldsForKanban,
+    ],
+  });
 
   const defaultIcon = viewTypeIconMapping(viewPickerType).displayName;
 
@@ -141,12 +145,8 @@ export const ViewPickerContentCreateMode = () => {
       </DropdownMenuHeader>
       <DropdownMenuItemsContainer>
         <ViewPickerIconAndNameContainer>
-          <IconPicker
-            onChange={onIconChange}
-            selectedIconKey={selectedIcon}
-            onClose={() => setHotkeyScope(ViewsHotkeyScope.ListDropdown)}
-          />
-          <TextInputV2
+          <IconPicker onChange={onIconChange} selectedIconKey={selectedIcon} />
+          <TextInput
             value={viewPickerInputName}
             onChange={(value) => {
               setViewPickerIsDirty(true);

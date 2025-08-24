@@ -1,13 +1,12 @@
 import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
-import { DropdownMenuHotkeyScope } from '@/ui/layout/dropdown/constants/DropdownMenuHotkeyScope';
-import { useDropdown } from '@/ui/layout/dropdown/hooks/useDropdown';
+import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { useTheme } from '@emotion/react';
 
 import styled from '@emotion/styled';
 import { IconChevronDown } from 'twenty-ui/display';
-import { SelectOption } from 'twenty-ui/input';
+import { type SelectOption } from 'twenty-ui/input';
 import { MenuItemSelect } from 'twenty-ui/navigation';
 
 const StyledDropdownMenuInnerSelectDropdownButton = styled.div`
@@ -34,6 +33,7 @@ export type DropdownMenuInnerSelectProps = {
   onChange: (value: SelectOption) => void;
   options: SelectOption[];
   dropdownId: string;
+  widthInPixels?: number;
 };
 
 export const DropdownMenuInnerSelect = ({
@@ -41,10 +41,11 @@ export const DropdownMenuInnerSelect = ({
   onChange,
   options,
   dropdownId,
+  widthInPixels,
 }: DropdownMenuInnerSelectProps) => {
   const theme = useTheme();
 
-  const { closeDropdown } = useDropdown(dropdownId);
+  const { closeDropdown } = useCloseDropdown();
 
   return (
     <Dropdown
@@ -55,14 +56,14 @@ export const DropdownMenuInnerSelect = ({
         </StyledDropdownMenuInnerSelectDropdownButton>
       }
       dropdownComponents={
-        <DropdownContent>
+        <DropdownContent widthInPixels={widthInPixels}>
           <DropdownMenuItemsContainer>
             {options.map((selectOption) => (
               <MenuItemSelect
                 key={`dropdown-menu-inner-select-item-${selectOption.value}`}
                 onClick={() => {
                   onChange(selectOption);
-                  closeDropdown();
+                  closeDropdown(dropdownId);
                 }}
                 text={selectOption.label}
                 disabled={selectOption.disabled}
@@ -72,12 +73,9 @@ export const DropdownMenuInnerSelect = ({
           </DropdownMenuItemsContainer>
         </DropdownContent>
       }
-      dropdownHotkeyScope={{
-        scope: DropdownMenuHotkeyScope.InnerSelect,
-        customScopes: {
-          commandMenu: false,
-          commandMenuOpen: false,
-        },
+      globalHotkeysConfig={{
+        enableGlobalHotkeysWithModifiers: false,
+        enableGlobalHotkeysConflictingWithKeyboard: false,
       }}
       dropdownId={dropdownId}
       dropdownOffset={{

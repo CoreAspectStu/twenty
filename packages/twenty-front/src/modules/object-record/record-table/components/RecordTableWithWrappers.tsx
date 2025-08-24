@@ -1,22 +1,14 @@
-import styled from '@emotion/styled';
-import { useRecoilCallback } from 'recoil';
-
 import { useDeleteOneRecord } from '@/object-record/hooks/useDeleteOneRecord';
-import { FieldMetadata } from '@/object-record/record-field/types/FieldMetadata';
 import { RecordTable } from '@/object-record/record-table/components/RecordTable';
-import { EntityDeleteContext } from '@/object-record/record-table/contexts/EntityDeleteHookContext';
-import { ColumnDefinition } from '@/object-record/record-table/types/ColumnDefinition';
-import { ScrollWrapper } from '@/ui/utilities/scroll/components/ScrollWrapper';
-import { useSaveCurrentViewFields } from '@/views/hooks/useSaveCurrentViewFields';
-import { mapColumnDefinitionsToViewFields } from '@/views/utils/mapColumnDefinitionToViewField';
-
-import { RecordIndexHotkeyScope } from '@/object-record/record-index/types/RecordIndexHotkeyScope';
 import { RecordTableComponentInstance } from '@/object-record/record-table/components/RecordTableComponentInstance';
 import { RecordTableContextProvider } from '@/object-record/record-table/components/RecordTableContextProvider';
-import { TableHotkeyScope } from '@/object-record/record-table/types/TableHotkeyScope';
-import { useScopedHotkeys } from '@/ui/utilities/hotkey/hooks/useScopedHotkeys';
+import { EntityDeleteContext } from '@/object-record/record-table/contexts/EntityDeleteHookContext';
+import { useSelectAllRows } from '@/object-record/record-table/hooks/internal/useSelectAllRows';
+import { PageFocusId } from '@/types/PageFocusId';
+import { useHotkeysOnFocusedElement } from '@/ui/utilities/hotkey/hooks/useHotkeysOnFocusedElement';
+import { ScrollWrapper } from '@/ui/utilities/scroll/components/ScrollWrapper';
+import styled from '@emotion/styled';
 import { RecordUpdateContext } from '../contexts/EntityUpdateMutationHookContext';
-import { useRecordTable } from '../hooks/useRecordTable';
 
 const StyledTableContainer = styled.div`
   display: flex;
@@ -39,55 +31,26 @@ export const RecordTableWithWrappers = ({
   recordTableId,
   viewBarId,
 }: RecordTableWithWrappersProps) => {
-  const { selectAllRows, setHasUserSelectedAllRows } = useRecordTable({
-    recordTableId,
-  });
+  const { selectAllRows } = useSelectAllRows(recordTableId);
 
   const handleSelectAllRows = () => {
-    setHasUserSelectedAllRows(true);
     selectAllRows();
   };
 
-  useScopedHotkeys(
-    'ctrl+a,meta+a',
-    handleSelectAllRows,
-    RecordIndexHotkeyScope.RecordIndex,
-    [],
-    {
+  useHotkeysOnFocusedElement({
+    keys: ['ctrl+a,meta+a'],
+    callback: handleSelectAllRows,
+    focusId: PageFocusId.RecordIndex,
+    dependencies: [handleSelectAllRows],
+    options: {
       enableOnFormTags: false,
     },
-  );
-
-  useScopedHotkeys(
-    'ctrl+a,meta+a',
-    handleSelectAllRows,
-    TableHotkeyScope.TableFocus,
-    [],
-    {
-      enableOnFormTags: false,
-    },
-  );
-
-  const { saveViewFields } = useSaveCurrentViewFields();
+  });
 
   const { deleteOneRecord } = useDeleteOneRecord({ objectNameSingular });
 
-  const handleColumnsChange = useRecoilCallback(
-    () => (columns) => {
-      saveViewFields(
-        mapColumnDefinitionsToViewFields(
-          columns as ColumnDefinition<FieldMetadata>[],
-        ),
-      );
-    },
-    [saveViewFields],
-  );
-
   return (
-    <RecordTableComponentInstance
-      recordTableId={recordTableId}
-      onColumnsChange={handleColumnsChange}
-    >
+    <RecordTableComponentInstance recordTableId={recordTableId}>
       <RecordTableContextProvider
         recordTableId={recordTableId}
         viewBarId={viewBarId}

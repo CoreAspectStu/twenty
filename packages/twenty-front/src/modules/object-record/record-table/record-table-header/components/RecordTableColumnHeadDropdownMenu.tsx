@@ -1,14 +1,15 @@
-import { FieldMetadata } from '@/object-record/record-field/types/FieldMetadata';
+import { type FieldMetadata } from '@/object-record/record-field/ui/types/FieldMetadata';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { DropdownMenuSeparator } from '@/ui/layout/dropdown/components/DropdownMenuSeparator';
-import { useDropdown } from '@/ui/layout/dropdown/hooks/useDropdown';
 
+import { useHandleToggleColumnSort } from '@/object-record/record-index/hooks/useHandleToggleColumnSort';
+import { useRecordTableContextOrThrow } from '@/object-record/record-table/contexts/RecordTableContext';
 import { useOpenRecordFilterChipFromTableHeader } from '@/object-record/record-table/record-table-header/hooks/useOpenRecordFilterChipFromTableHeader';
-import { onToggleColumnSortComponentState } from '@/object-record/record-table/states/onToggleColumnSortComponentState';
 import { visibleTableColumnsComponentSelector } from '@/object-record/record-table/states/selectors/visibleTableColumnsComponentSelector';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
+import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { useToggleScrollWrapper } from '@/ui/utilities/scroll/hooks/useToggleScrollWrapper';
-import { useRecoilComponentValueV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValueV2';
+import { useRecoilComponentValue } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValue';
 import styled from '@emotion/styled';
 import { useLingui } from '@lingui/react/macro';
 import {
@@ -20,10 +21,11 @@ import {
 } from 'twenty-ui/display';
 import { MenuItem } from 'twenty-ui/navigation';
 import { useTableColumns } from '../../hooks/useTableColumns';
-import { ColumnDefinition } from '../../types/ColumnDefinition';
+import { type ColumnDefinition } from '../../types/ColumnDefinition';
 
 export type RecordTableColumnHeadDropdownMenuProps = {
   column: ColumnDefinition<FieldMetadata>;
+  objectMetadataId: string;
 };
 
 const StyledDropdownMenuItemsContainer = styled(DropdownMenuItemsContainer)`
@@ -32,13 +34,14 @@ const StyledDropdownMenuItemsContainer = styled(DropdownMenuItemsContainer)`
 
 export const RecordTableColumnHeadDropdownMenu = ({
   column,
+  objectMetadataId,
 }: RecordTableColumnHeadDropdownMenuProps) => {
   const { t } = useLingui();
 
   const { toggleScrollXWrapper, toggleScrollYWrapper } =
     useToggleScrollWrapper();
 
-  const visibleTableColumns = useRecoilComponentValueV2(
+  const visibleTableColumns = useRecoilComponentValue(
     visibleTableColumnsComponentSelector,
   );
 
@@ -51,13 +54,17 @@ export const RecordTableColumnHeadDropdownMenu = ({
   const canMoveRight =
     column.fieldMetadataId !== lastVisibleColumn?.fieldMetadataId && canMove;
 
-  const { handleColumnVisibilityChange, handleMoveTableColumn } =
-    useTableColumns();
+  const { recordTableId } = useRecordTableContextOrThrow();
 
-  const { closeDropdown } = useDropdown(column.fieldMetadataId + '-header');
+  const { handleColumnVisibilityChange, handleMoveTableColumn } =
+    useTableColumns({ recordTableId });
+
+  const dropdownId = column.fieldMetadataId + '-header';
+
+  const { closeDropdown } = useCloseDropdown();
 
   const closeDropdownAndToggleScroll = () => {
-    closeDropdown();
+    closeDropdown(dropdownId);
     toggleScrollXWrapper(true);
     toggleScrollYWrapper(false);
   };
@@ -79,17 +86,20 @@ export const RecordTableColumnHeadDropdownMenu = ({
 
   const handleColumnVisibility = () => {
     closeDropdownAndToggleScroll();
-    handleColumnVisibilityChange(column);
+    handleColumnVisibilityChange({
+      ...column,
+      isVisible: false,
+    });
   };
 
-  const onToggleColumnSort = useRecoilComponentValueV2(
-    onToggleColumnSortComponentState,
-  );
+  const handleToggleColumnSort = useHandleToggleColumnSort({
+    objectMetadataItemId: objectMetadataId,
+  });
 
   const handleSortClick = () => {
     closeDropdownAndToggleScroll();
 
-    onToggleColumnSort?.(column.fieldMetadataId);
+    handleToggleColumnSort(column.fieldMetadataId);
   };
 
   const { openRecordFilterChipFromTableHeader } =

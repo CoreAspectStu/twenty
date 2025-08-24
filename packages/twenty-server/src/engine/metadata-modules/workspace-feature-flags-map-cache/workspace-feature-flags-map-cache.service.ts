@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
 
-import { FeatureFlagMap } from 'src/engine/core-modules/feature-flag/interfaces/feature-flag-map.interface';
+import { type FeatureFlagMap } from 'src/engine/core-modules/feature-flag/interfaces/feature-flag-map.interface';
 
 import { FeatureFlag } from 'src/engine/core-modules/feature-flag/feature-flag.entity';
 import { TwentyORMExceptionCode } from 'src/engine/twenty-orm/exceptions/twenty-orm.exception';
@@ -55,44 +55,15 @@ export class WorkspaceFeatureFlagsMapCacheService {
 
   async recomputeFeatureFlagsMapCache({
     workspaceId,
-    ignoreLock = false,
   }: {
     workspaceId: string;
-    ignoreLock?: boolean;
   }): Promise<void> {
-    const isAlreadyCaching =
-      await this.workspaceCacheStorageService.getFeatureFlagsMapOngoingCachingLock(
-        workspaceId,
-      );
-
-    if (isAlreadyCaching) {
-      if (ignoreLock) {
-        this.logger.warn(
-          `Feature flags map cache is already being cached (workspace ${workspaceId}), respecting lock and returning no data`,
-        );
-
-        return;
-      } else {
-        this.logger.warn(
-          `Feature flags map cache is already being cached (workspace ${workspaceId}), ignoring lock`,
-        );
-      }
-    }
-
-    await this.workspaceCacheStorageService.addFeatureFlagMapOngoingCachingLock(
-      workspaceId,
-    );
-
     const freshFeatureFlagMap =
       await this.getFeatureFlagsMapFromDatabase(workspaceId);
 
     await this.workspaceCacheStorageService.setFeatureFlagsMap(
       workspaceId,
       freshFeatureFlagMap,
-    );
-
-    await this.workspaceCacheStorageService.removeFeatureFlagsMapOngoingCachingLock(
-      workspaceId,
     );
   }
 

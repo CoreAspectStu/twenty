@@ -13,18 +13,21 @@ import { fieldMetadataItemUsedInDropdownComponentSelector } from '@/object-recor
 import { objectFilterDropdownCurrentRecordFilterComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownCurrentRecordFilterComponentState';
 import { RecordFiltersComponentInstanceContext } from '@/object-record/record-filter/states/context/RecordFiltersComponentInstanceContext';
 import { currentRecordFiltersComponentState } from '@/object-record/record-filter/states/currentRecordFiltersComponentState';
-import { RecordFilter } from '@/object-record/record-filter/types/RecordFilter';
+import { type RecordFilter } from '@/object-record/record-filter/types/RecordFilter';
 import { getRecordFilterOperands } from '@/object-record/record-filter/utils/getRecordFilterOperands';
-import { SingleRecordPickerHotkeyScope } from '@/object-record/record-picker/single-record-picker/types/SingleRecordPickerHotkeyScope';
-import { useRecoilComponentValueV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValueV2';
-import { useSetRecoilComponentStateV2 } from '@/ui/utilities/state/component-state/hooks/useSetRecoilComponentStateV2';
-import { generatedMockObjectMetadataItems } from '~/testing/mock-data/generatedMockObjectMetadataItems';
+import { FocusComponentType } from '@/ui/utilities/focus/types/FocusComponentType';
+import { useRecoilComponentValue } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValue';
+import { useSetRecoilComponentState } from '@/ui/utilities/state/component-state/hooks/useSetRecoilComponentState';
+import { VIEW_BAR_FILTER_DROPDOWN_ID } from '@/views/constants/ViewBarFilterDropdownId';
 import { getMockPersonObjectMetadataItem } from '~/testing/mock-data/people';
+import { generatedMockObjectMetadataItems } from '~/testing/utils/generatedMockObjectMetadataItems';
 
-const mockSetHotkeyScope = jest.fn();
+const mockPushFocusItemToFocusStack = jest.fn();
 
-jest.mock('@/ui/utilities/hotkey/hooks/useSetHotkeyScope', () => ({
-  useSetHotkeyScope: () => mockSetHotkeyScope,
+jest.mock('@/ui/utilities/focus/hooks/usePushFocusItemToFocusStack', () => ({
+  usePushFocusItemToFocusStack: () => ({
+    pushFocusItemToFocusStack: mockPushFocusItemToFocusStack,
+  }),
 }));
 
 const peopleObjectMetadataItemMock = getMockPersonObjectMetadataItem();
@@ -66,13 +69,13 @@ describe('useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown', () =
         const { initializeFilterOnFieldMetataItemFromViewBarFilterDropdown } =
           useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown();
 
-        const fieldMetadataItemUsedInDropdown = useRecoilComponentValueV2(
+        const fieldMetadataItemUsedInDropdown = useRecoilComponentValue(
           fieldMetadataItemUsedInDropdownComponentSelector,
         );
-        const objectFilterDropdownFilterIsSelected = useRecoilComponentValueV2(
+        const objectFilterDropdownFilterIsSelected = useRecoilComponentValue(
           objectFilterDropdownFilterIsSelectedComponentState,
         );
-        const selectedOperandInDropdown = useRecoilComponentValueV2(
+        const selectedOperandInDropdown = useRecoilComponentValue(
           selectedOperandInDropdownComponentState,
         );
 
@@ -109,7 +112,7 @@ describe('useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown', () =
     );
     expect(result.current.objectFilterDropdownFilterIsSelected).toBe(true);
     expect(result.current.selectedOperandInDropdown).toBe(defaultOperand);
-    expect(mockSetHotkeyScope).not.toHaveBeenCalled();
+    expect(mockPushFocusItemToFocusStack).not.toHaveBeenCalled();
   });
 
   it('should initialize filter with a relation field', () => {
@@ -118,13 +121,13 @@ describe('useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown', () =
         const { initializeFilterOnFieldMetataItemFromViewBarFilterDropdown } =
           useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown();
 
-        const fieldMetadataItemUsedInDropdown = useRecoilComponentValueV2(
+        const fieldMetadataItemUsedInDropdown = useRecoilComponentValue(
           fieldMetadataItemUsedInDropdownComponentSelector,
         );
-        const objectFilterDropdownFilterIsSelected = useRecoilComponentValueV2(
+        const objectFilterDropdownFilterIsSelected = useRecoilComponentValue(
           objectFilterDropdownFilterIsSelectedComponentState,
         );
-        const selectedOperandInDropdown = useRecoilComponentValueV2(
+        const selectedOperandInDropdown = useRecoilComponentValue(
           selectedOperandInDropdownComponentState,
         );
 
@@ -161,9 +164,16 @@ describe('useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown', () =
     );
     expect(result.current.objectFilterDropdownFilterIsSelected).toBe(true);
     expect(result.current.selectedOperandInDropdown).toBe(defaultOperand);
-    expect(mockSetHotkeyScope).toHaveBeenCalledWith(
-      SingleRecordPickerHotkeyScope.SingleRecordPicker,
-    );
+    expect(mockPushFocusItemToFocusStack).toHaveBeenCalledWith({
+      focusId: VIEW_BAR_FILTER_DROPDOWN_ID,
+      component: {
+        type: FocusComponentType.DROPDOWN,
+        instanceId: personCompanyFieldMetadataItemMock.id,
+      },
+      globalHotkeysConfig: {
+        enableGlobalHotkeysConflictingWithKeyboard: false,
+      },
+    });
   });
 
   it('should initialize filter with a duplicate field on city', () => {
@@ -172,26 +182,25 @@ describe('useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown', () =
         const { initializeFilterOnFieldMetataItemFromViewBarFilterDropdown } =
           useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown();
 
-        const fieldMetadataItemUsedInDropdown = useRecoilComponentValueV2(
+        const fieldMetadataItemUsedInDropdown = useRecoilComponentValue(
           fieldMetadataItemUsedInDropdownComponentSelector,
         );
-        const objectFilterDropdownFilterIsSelected = useRecoilComponentValueV2(
+        const objectFilterDropdownFilterIsSelected = useRecoilComponentValue(
           objectFilterDropdownFilterIsSelectedComponentState,
         );
-        const selectedOperandInDropdown = useRecoilComponentValueV2(
+        const selectedOperandInDropdown = useRecoilComponentValue(
           selectedOperandInDropdownComponentState,
         );
 
-        const objectFilterDropdownCurrentRecordFilter =
-          useRecoilComponentValueV2(
-            objectFilterDropdownCurrentRecordFilterComponentState,
-          );
+        const objectFilterDropdownCurrentRecordFilter = useRecoilComponentValue(
+          objectFilterDropdownCurrentRecordFilterComponentState,
+        );
 
-        const setCurrentRecordFilters = useSetRecoilComponentStateV2(
+        const setCurrentRecordFilters = useSetRecoilComponentState(
           currentRecordFiltersComponentState,
         );
 
-        const currentRecordFilters = useRecoilComponentValueV2(
+        const currentRecordFilters = useRecoilComponentValue(
           currentRecordFiltersComponentState,
         );
 
@@ -253,26 +262,25 @@ describe('useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown', () =
         const { initializeFilterOnFieldMetataItemFromViewBarFilterDropdown } =
           useInitializeFilterOnFieldMetadataItemFromViewBarFilterDropdown();
 
-        const fieldMetadataItemUsedInDropdown = useRecoilComponentValueV2(
+        const fieldMetadataItemUsedInDropdown = useRecoilComponentValue(
           fieldMetadataItemUsedInDropdownComponentSelector,
         );
-        const objectFilterDropdownFilterIsSelected = useRecoilComponentValueV2(
+        const objectFilterDropdownFilterIsSelected = useRecoilComponentValue(
           objectFilterDropdownFilterIsSelectedComponentState,
         );
-        const selectedOperandInDropdown = useRecoilComponentValueV2(
+        const selectedOperandInDropdown = useRecoilComponentValue(
           selectedOperandInDropdownComponentState,
         );
 
-        const objectFilterDropdownCurrentRecordFilter =
-          useRecoilComponentValueV2(
-            objectFilterDropdownCurrentRecordFilterComponentState,
-          );
+        const objectFilterDropdownCurrentRecordFilter = useRecoilComponentValue(
+          objectFilterDropdownCurrentRecordFilterComponentState,
+        );
 
-        const setCurrentRecordFilters = useSetRecoilComponentStateV2(
+        const setCurrentRecordFilters = useSetRecoilComponentState(
           currentRecordFiltersComponentState,
         );
 
-        const currentRecordFilters = useRecoilComponentValueV2(
+        const currentRecordFilters = useRecoilComponentValue(
           currentRecordFiltersComponentState,
         );
 

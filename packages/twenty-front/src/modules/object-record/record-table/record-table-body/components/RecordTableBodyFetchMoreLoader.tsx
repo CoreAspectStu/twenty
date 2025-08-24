@@ -4,12 +4,11 @@ import { useRecoilState } from 'recoil';
 
 import { useRecordIndexTableFetchMore } from '@/object-record/record-index/hooks/useRecordIndexTableFetchMore';
 import { useRecordTableContextOrThrow } from '@/object-record/record-table/contexts/RecordTableContext';
-import { hasRecordTableFetchedAllRecordsComponentStateV2 } from '@/object-record/record-table/states/hasRecordTableFetchedAllRecordsComponentStateV2';
+import { hasRecordTableFetchedAllRecordsComponentState } from '@/object-record/record-table/states/hasRecordTableFetchedAllRecordsComponentState';
 import { isFetchingMoreRecordsFamilyState } from '@/object-record/states/isFetchingMoreRecordsFamilyState';
 import { useScrollWrapperElement } from '@/ui/utilities/scroll/hooks/useScrollWrapperElement';
-import { useRecoilComponentValueV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValueV2';
+import { useRecoilComponentValue } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValue';
 import { GRAY_SCALE } from 'twenty-ui/theme';
-import { useDebouncedCallback } from 'use-debounce';
 
 const StyledText = styled.div`
   align-items: center;
@@ -33,15 +32,11 @@ export const RecordTableBodyFetchMoreLoader = () => {
 
   const { scrollWrapperHTMLElement } = useScrollWrapperElement();
 
-  const hasRecordTableFetchedAllRecordsComponents = useRecoilComponentValueV2(
-    hasRecordTableFetchedAllRecordsComponentStateV2,
+  const hasRecordTableFetchedAllRecordsComponents = useRecoilComponentValue(
+    hasRecordTableFetchedAllRecordsComponentState,
   );
 
   const showLoadingMoreRow = !hasRecordTableFetchedAllRecordsComponents;
-  const debouncedFetchMoreRecordsLazy = useDebouncedCallback(
-    fetchMoreRecordsLazy,
-    100,
-  );
 
   const { ref: tbodyRef } = useInView({
     onChange: async (inView) => {
@@ -50,7 +45,7 @@ export const RecordTableBodyFetchMoreLoader = () => {
       }
 
       setIsFetchingMoreRecords(true);
-      await debouncedFetchMoreRecordsLazy();
+      await fetchMoreRecordsLazy();
       setIsFetchingMoreRecords(false);
     },
     delay: 1000,

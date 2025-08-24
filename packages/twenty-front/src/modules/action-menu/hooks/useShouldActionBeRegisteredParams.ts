@@ -1,21 +1,20 @@
-import { ShouldBeRegisteredFunctionParams } from '@/action-menu/actions/types/ShouldBeRegisteredFunctionParams';
+import { type ShouldBeRegisteredFunctionParams } from '@/action-menu/actions/types/ShouldBeRegisteredFunctionParams';
 import { getActionViewType } from '@/action-menu/actions/utils/getActionViewType';
 import { ActionMenuContext } from '@/action-menu/contexts/ActionMenuContext';
+import { objectPermissionsFamilySelector } from '@/auth/states/objectPermissionsFamilySelector';
 import { contextStoreCurrentViewTypeComponentState } from '@/context-store/states/contextStoreCurrentViewTypeComponentState';
 import { contextStoreNumberOfSelectedRecordsComponentState } from '@/context-store/states/contextStoreNumberOfSelectedRecordsComponentState';
 import { contextStoreTargetedRecordsRuleComponentState } from '@/context-store/states/contextStoreTargetedRecordsRuleComponentState';
 import { ContextStoreViewType } from '@/context-store/types/ContextStoreViewType';
 import { useFavorites } from '@/favorites/hooks/useFavorites';
 import { CoreObjectNameSingular } from '@/object-metadata/types/CoreObjectNameSingular';
-import { ObjectMetadataItem } from '@/object-metadata/types/ObjectMetadataItem';
+import { type ObjectMetadataItem } from '@/object-metadata/types/ObjectMetadataItem';
 import { useObjectPermissionsForObject } from '@/object-record/hooks/useObjectPermissionsForObject';
 import { recordStoreFamilyState } from '@/object-record/record-store/states/recordStoreFamilyState';
 import { isSoftDeleteFilterActiveComponentState } from '@/object-record/record-table/states/isSoftDeleteFilterActiveComponentState';
-import { useRecoilComponentValueV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValueV2';
-import { useIsFeatureEnabled } from '@/workspace/hooks/useIsFeatureEnabled';
+import { useRecoilComponentValue } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValue';
 import { useContext } from 'react';
-import { useRecoilValue } from 'recoil';
-import { FeatureFlagKey } from '~/generated-metadata/graphql';
+import { useRecoilCallback, useRecoilValue } from 'recoil';
 
 export const useShouldActionBeRegisteredParams = ({
   objectMetadataItem,
@@ -24,7 +23,7 @@ export const useShouldActionBeRegisteredParams = ({
 }): ShouldBeRegisteredFunctionParams => {
   const { sortedFavorites: favorites } = useFavorites();
 
-  const contextStoreTargetedRecordsRule = useRecoilComponentValueV2(
+  const contextStoreTargetedRecordsRule = useRecoilComponentValue(
     contextStoreTargetedRecordsRuleComponentState,
   );
 
@@ -43,7 +42,7 @@ export const useShouldActionBeRegisteredParams = ({
     useRecoilValue(recordStoreFamilyState(recordId ?? '')) || undefined;
 
   const objectPermissions = useObjectPermissionsForObject(
-    objectMetadataItem?.id,
+    objectMetadataItem?.id ?? '',
   );
 
   const isNoteOrTask =
@@ -52,29 +51,53 @@ export const useShouldActionBeRegisteredParams = ({
 
   const { isInRightDrawer } = useContext(ActionMenuContext);
 
-  const isSoftDeleteFilterActive = useRecoilComponentValueV2(
+  const isSoftDeleteFilterActive = useRecoilComponentValue(
     isSoftDeleteFilterActiveComponentState,
   );
 
   const isShowPage =
-    useRecoilComponentValueV2(contextStoreCurrentViewTypeComponentState) ===
+    useRecoilComponentValue(contextStoreCurrentViewTypeComponentState) ===
     ContextStoreViewType.ShowPage;
 
-  const isWorkflowEnabled = useIsFeatureEnabled(
-    FeatureFlagKey.IS_WORKFLOW_ENABLED,
-  );
-
-  const numberOfSelectedRecords = useRecoilComponentValueV2(
+  const numberOfSelectedRecords = useRecoilComponentValue(
     contextStoreNumberOfSelectedRecordsComponentState,
   );
 
-  const contextStoreCurrentViewType = useRecoilComponentValueV2(
+  const contextStoreCurrentViewType = useRecoilComponentValue(
     contextStoreCurrentViewTypeComponentState,
   );
 
   const viewType = getActionViewType(
     contextStoreCurrentViewType,
     contextStoreTargetedRecordsRule,
+  );
+
+  const getObjectReadPermission = useRecoilCallback(
+    ({ snapshot }) =>
+      (objectMetadataNameSingular: string) => {
+        return snapshot
+          .getLoadable(
+            objectPermissionsFamilySelector({
+              objectNameSingular: objectMetadataNameSingular,
+            }),
+          )
+          .getValue().canRead;
+      },
+    [],
+  );
+
+  const getObjectWritePermission = useRecoilCallback(
+    ({ snapshot }) =>
+      (objectMetadataNameSingular: string) => {
+        return snapshot
+          .getLoadable(
+            objectPermissionsFamilySelector({
+              objectNameSingular: objectMetadataNameSingular,
+            }),
+          )
+          .getValue().canUpdate;
+      },
+    [],
   );
 
   return {
@@ -86,8 +109,9 @@ export const useShouldActionBeRegisteredParams = ({
     isSoftDeleteFilterActive,
     isShowPage,
     selectedRecord,
-    isWorkflowEnabled,
     numberOfSelectedRecords,
     viewType: viewType ?? undefined,
+    getTargetObjectReadPermission: getObjectReadPermission,
+    getTargetObjectWritePermission: getObjectWritePermission,
   };
 };

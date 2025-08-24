@@ -1,10 +1,10 @@
 import { currentWorkspaceMembersState } from '@/auth/states/currentWorkspaceMembersStates';
-import { CurrentWorkspaceMember } from '@/auth/states/currentWorkspaceMemberState';
+import { type CurrentWorkspaceMember } from '@/auth/states/currentWorkspaceMemberState';
 import { t } from '@lingui/core/macro';
 import { useRecoilValue } from 'recoil';
 import { isDefined } from 'twenty-shared/utils';
 import { MenuItem, MenuItemAvatar } from 'twenty-ui/navigation';
-import { SearchRecord } from '~/generated-metadata/graphql';
+import { type SearchRecord } from '~/generated-metadata/graphql';
 
 type SettingsRoleAssignmentWorkspaceMemberPickerDropdownContentProps = {
   loading: boolean;
@@ -39,20 +39,25 @@ export const SettingsRoleAssignmentWorkspaceMemberPickerDropdownContent = ({
 
   return (
     <>
-      {enrichedWorkspaceMembers.map((workspaceMember) => (
-        <MenuItemAvatar
-          key={workspaceMember.id}
-          onClick={() => onSelect(workspaceMember)}
-          avatar={{
-            type: 'rounded',
-            size: 'md',
-            placeholder: workspaceMember?.name.firstName ?? '',
-            placeholderColorSeed: workspaceMember?.id,
-            avatarUrl: workspaceMember?.avatarUrl,
-          }}
-          text={workspaceMember?.name.firstName ?? ''}
-        />
-      ))}
+      {enrichedWorkspaceMembers.map((workspaceMember) => {
+        const workspaceMemberFullName = `${workspaceMember?.name.firstName ?? ''} ${workspaceMember?.name.lastName ?? ''}`;
+
+        return (
+          <MenuItemAvatar
+            key={workspaceMember.id}
+            onClick={() => onSelect(workspaceMember)}
+            avatar={{
+              type: 'rounded',
+              size: 'md',
+              placeholder: workspaceMemberFullName,
+              placeholderColorSeed: workspaceMember.id,
+              avatarUrl: workspaceMember.avatarUrl,
+            }}
+            text={workspaceMemberFullName}
+            contextualText={workspaceMember.userEmail}
+          />
+        );
+      })}
     </>
   );
 };

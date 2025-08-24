@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
-import { Any, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { SentryCronMonitor } from 'src/engine/core-modules/cron/sentry-cron-monitor.decorator';
 import { ExceptionHandlerService } from 'src/engine/core-modules/exception-handler/exception-handler.service';
@@ -11,10 +11,11 @@ import { Processor } from 'src/engine/core-modules/message-queue/decorators/proc
 import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
 import { MessageQueueService } from 'src/engine/core-modules/message-queue/services/message-queue.service';
 import { Workspace } from 'src/engine/core-modules/workspace/workspace.entity';
-import { TwentyORMGlobalManager } from 'src/engine/twenty-orm/twenty-orm-global.manager';
+import { getWorkspaceSchemaName } from 'src/engine/workspace-datasource/utils/get-workspace-schema-name.util';
+import { WorkspaceDataSourceService } from 'src/engine/workspace-datasource/workspace-datasource.service';
 import {
   CalendarEventListFetchJob,
-  CalendarEventListFetchJobData,
+  type CalendarEventListFetchJobData,
 } from 'src/modules/calendar/calendar-event-import-manager/jobs/calendar-event-list-fetch.job';
 import { CalendarChannelSyncStage } from 'src/modules/calendar/common/standard-objects/calendar-channel.workspace-entity';
 
@@ -29,8 +30,8 @@ export class CalendarEventListFetchCronJob {
     private readonly workspaceRepository: Repository<Workspace>,
     @InjectMessageQueue(MessageQueue.calendarQueue)
     private readonly messageQueueService: MessageQueueService,
-    private readonly twentyORMGlobalManager: TwentyORMGlobalManager,
     private readonly exceptionHandlerService: ExceptionHandlerService,
+    private readonly workspaceDataSourceService: WorkspaceDataSourceService,
   ) {}
 
   @Process(CalendarEventListFetchCronJob.name)
@@ -45,23 +46,16 @@ export class CalendarEventListFetchCronJob {
       },
     });
 
+    const mainDataSource =
+      await this.workspaceDataSourceService.connectToMainDataSource();
+
     for (const activeWorkspace of activeWorkspaces) {
       try {
-        const calendarChannelRepository =
-          await this.twentyORMGlobalManager.getRepositoryForWorkspace(
-            activeWorkspace.id,
-            'calendarChannel',
-          );
+        const schemaName = getWorkspaceSchemaName(activeWorkspace.id);
 
-        const calendarChannels = await calendarChannelRepository.find({
-          where: {
-            isSyncEnabled: true,
-            syncStage: Any([
-              CalendarChannelSyncStage.FULL_CALENDAR_EVENT_LIST_FETCH_PENDING,
-              CalendarChannelSyncStage.PARTIAL_CALENDAR_EVENT_LIST_FETCH_PENDING,
-            ]),
-          },
-        });
+        const calendarChannels = await mainDataSource.query(
+          `SELECT * FROM ${schemaName}."calendarChannel" WHERE "isSyncEnabled" = true AND "syncStage" IN ('${CalendarChannelSyncStage.FULL_CALENDAR_EVENT_LIST_FETCH_PENDING}', '${CalendarChannelSyncStage.PARTIAL_CALENDAR_EVENT_LIST_FETCH_PENDING}')`,
+        );
 
         for (const calendarChannel of calendarChannels) {
           await this.messageQueueService.add<CalendarEventListFetchJobData>(

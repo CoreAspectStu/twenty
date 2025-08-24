@@ -1,4 +1,4 @@
-import { WorkflowActionType } from '@/workflow/types/Workflow';
+import { type WorkflowActionType } from '@/workflow/types/Workflow';
 
 export const OTHER_ACTIONS: Array<{
   label: string;
@@ -27,5 +27,10 @@ export const OTHER_ACTIONS: Array<{
     label: 'HTTP Request',
     type: 'HTTP_REQUEST',
     icon: 'IconWorld',
+  },
+  {
+    label: 'AI Agent',
+    type: 'AI_AGENT',
+    icon: 'IconBrain',
   },
 ];

@@ -1,10 +1,9 @@
 import { SettingsRoleSettings } from '@/settings/roles/role-settings/components/SettingsRoleSettings';
 import { settingsDraftRoleFamilyState } from '@/settings/roles/states/settingsDraftRoleFamilyState';
-import { Meta, StoryObj } from '@storybook/react';
+import { type Meta, type StoryObj } from '@storybook/react';
 import { useSetRecoilState } from 'recoil';
 import { isDefined } from 'twenty-shared/utils';
 import { ComponentDecorator, RouterDecorator } from 'twenty-ui/testing';
-import { PENDING_ROLE_ID } from '~/pages/settings/roles/SettingsRoleCreate';
 import { I18nFrontDecorator } from '~/testing/decorators/I18nFrontDecorator';
 import { getRolesMock } from '~/testing/mock-data/roles';
 
@@ -57,7 +56,7 @@ export const ReadOnly: Story = {
 
 export const PendingRole: Story = {
   args: {
-    roleId: PENDING_ROLE_ID,
+    roleId: 'newRoleId',
     isEditable: true,
     isCreateMode: false,
   },

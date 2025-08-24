@@ -1,35 +1,36 @@
 import { HttpService } from '@nestjs/axios';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
-import { Repository } from 'typeorm';
+import { type Repository } from 'typeorm';
 
-import { AuthProviderEnum } from 'src/engine/core-modules/workspace/types/workspace.type';
-import { AppToken } from 'src/engine/core-modules/app-token/app-token.entity';
+import { type AppToken } from 'src/engine/core-modules/app-token/app-token.entity';
 import {
   AuthException,
   AuthExceptionCode,
 } from 'src/engine/core-modules/auth/auth.exception';
 import { SignInUpService } from 'src/engine/core-modules/auth/services/sign-in-up.service';
+import { LoginTokenService } from 'src/engine/core-modules/auth/token/services/login-token.service';
 import {
-  AuthProviderWithPasswordType,
-  ExistingUserOrPartialUserWithPicture,
-  SignInUpBaseParams,
+  type AuthProviderWithPasswordType,
+  type ExistingUserOrPartialUserWithPicture,
+  type SignInUpBaseParams,
 } from 'src/engine/core-modules/auth/types/signInUp.type';
 import { DomainManagerService } from 'src/engine/core-modules/domain-manager/services/domain-manager.service';
 import { FeatureFlagService } from 'src/engine/core-modules/feature-flag/services/feature-flag.service';
 import { FileUploadService } from 'src/engine/core-modules/file/file-upload/services/file-upload.service';
 import { OnboardingService } from 'src/engine/core-modules/onboarding/onboarding.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
-import { UserWorkspace } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
+import { type UserWorkspace } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { UserWorkspaceService } from 'src/engine/core-modules/user-workspace/user-workspace.service';
 import { UserService } from 'src/engine/core-modules/user/services/user.service';
 import { User } from 'src/engine/core-modules/user/user.entity';
 import { WorkspaceInvitationService } from 'src/engine/core-modules/workspace-invitation/services/workspace-invitation.service';
+import { AuthProviderEnum } from 'src/engine/core-modules/workspace/types/workspace.type';
 import { Workspace } from 'src/engine/core-modules/workspace/workspace.entity';
 import { UserRoleService } from 'src/engine/metadata-modules/user-role/user-role.service';
-import { LoginTokenService } from 'src/engine/core-modules/auth/token/services/login-token.service';
+import { WorkspaceEventEmitter } from 'src/engine/workspace-event-emitter/workspace-event-emitter';
 
 jest.mock('src/utils/image', () => {
   return {
@@ -134,6 +135,12 @@ describe('SignInUpService', () => {
           provide: FeatureFlagService,
           useValue: {
             isFeatureEnabled: jest.fn(),
+          },
+        },
+        {
+          provide: WorkspaceEventEmitter,
+          useValue: {
+            emitCustomBatchEvent: jest.fn(),
           },
         },
       ],

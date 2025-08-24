@@ -12,8 +12,8 @@ import { Title } from '@/auth/components/Title';
 import { EmailVerificationSent } from '@/auth/sign-in-up/components/EmailVerificationSent';
 import { FooterNote } from '@/auth/sign-in-up/components/FooterNote';
 import { SignInUpGlobalScopeForm } from '@/auth/sign-in-up/components/SignInUpGlobalScopeForm';
-import { SignInUpSSOIdentityProviderSelection } from '@/auth/sign-in-up/components/internal/SignInUpSSOIdentityProviderSelection';
 import { SignInUpWorkspaceScopeForm } from '@/auth/sign-in-up/components/SignInUpWorkspaceScopeForm';
+import { SignInUpSSOIdentityProviderSelection } from '@/auth/sign-in-up/components/internal/SignInUpSSOIdentityProviderSelection';
 import { SignInUpWorkspaceScopeFormEffect } from '@/auth/sign-in-up/components/internal/SignInUpWorkspaceScopeFormEffect';
 import { isMultiWorkspaceEnabledState } from '@/client-config/states/isMultiWorkspaceEnabledState';
 import { useGetPublicWorkspaceDataByDomain } from '@/domain-manager/hooks/useGetPublicWorkspaceDataByDomain';
@@ -22,14 +22,16 @@ import { useIsCurrentLocationOnDefaultDomain } from '@/domain-manager/hooks/useI
 import { DEFAULT_WORKSPACE_NAME } from '@/ui/navigation/navigation-drawer/constants/DefaultWorkspaceName';
 import { useMemo } from 'react';
 
+import { SignInUpGlobalScopeFormEffect } from '@/auth/sign-in-up/components/internal/SignInUpGlobalScopeFormEffect';
+import { SignInUpTwoFactorAuthenticationProvision } from '@/auth/sign-in-up/components/internal/SignInUpTwoFactorAuthenticationProvision';
+import { SignInUpTOTPVerification } from '@/auth/sign-in-up/components/internal/SignInUpTwoFactorAuthenticationVerification';
 import { useWorkspaceFromInviteHash } from '@/auth/sign-in-up/hooks/useWorkspaceFromInviteHash';
 import { Modal } from '@/ui/layout/modal/components/Modal';
 import { useLingui } from '@lingui/react/macro';
 import { useSearchParams } from 'react-router-dom';
 import { isDefined } from 'twenty-shared/utils';
 import { AnimatedEaseIn } from 'twenty-ui/utilities';
-import { PublicWorkspaceDataOutput } from '~/generated/graphql';
-import { SignInUpGlobalScopeFormEffect } from '@/auth/sign-in-up/components/internal/SignInUpGlobalScopeFormEffect';
+import { type PublicWorkspaceDataOutput } from '~/generated/graphql';
 
 const StandardContent = ({
   workspacePublicData,
@@ -55,7 +57,12 @@ const StandardContent = ({
       </AnimatedEaseIn>
       <Title animate>{title}</Title>
       {signInUpForm}
-      {signInUpStep !== SignInUpStep.Password && <FooterNote />}
+      {![
+        SignInUpStep.Password,
+        SignInUpStep.TwoFactorAuthenticationProvision,
+        SignInUpStep.TwoFactorAuthenticationVerification,
+        SignInUpStep.WorkspaceSelection,
+      ].includes(signInUpStep) && <FooterNote />}
     </Modal.Content>
   );
 };
@@ -82,11 +89,20 @@ export const SignInUp = () => {
 
   const title = useMemo(() => {
     if (isDefined(workspaceInviteHash)) {
-      return `Join ${workspaceFromInviteHash?.displayName ?? ''} team`;
+      const workspaceName = workspaceFromInviteHash?.displayName ?? '';
+      return t`Join ${workspaceName} team`;
     }
 
     if (signInUpStep === SignInUpStep.WorkspaceSelection) {
       return t`Choose a Workspace`;
+    }
+
+    if (signInUpStep === SignInUpStep.TwoFactorAuthenticationProvision) {
+      return t`Setup your 2FA`;
+    }
+
+    if (signInUpStep === SignInUpStep.TwoFactorAuthenticationVerification) {
+      return t`Verify code from the app`;
     }
 
     const workspaceName = !isDefined(workspacePublicData?.displayName)
@@ -122,6 +138,15 @@ export const SignInUp = () => {
     ) {
       return <SignInUpSSOIdentityProviderSelection />;
     }
+
+    if (signInUpStep === SignInUpStep.TwoFactorAuthenticationProvision) {
+      return <SignInUpTwoFactorAuthenticationProvision />;
+    }
+
+    if (signInUpStep === SignInUpStep.TwoFactorAuthenticationVerification) {
+      return <SignInUpTOTPVerification />;
+    }
+
     if (isDefined(workspacePublicData) && isOnAWorkspace) {
       return (
         <>

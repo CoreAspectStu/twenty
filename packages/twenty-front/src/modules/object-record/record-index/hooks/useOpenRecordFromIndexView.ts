@@ -6,8 +6,9 @@ import { currentRecordFiltersComponentState } from '@/object-record/record-filte
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
 import { recordIndexOpenRecordInState } from '@/object-record/record-index/states/recordIndexOpenRecordInState';
 import { currentRecordSortsComponentState } from '@/object-record/record-sort/states/currentRecordSortsComponentState';
+import { canOpenObjectInSidePanel } from '@/object-record/utils/canOpenObjectInSidePanel';
 import { AppPath } from '@/types/AppPath';
-import { useRecoilComponentCallbackStateV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentCallbackStateV2';
+import { useRecoilComponentCallbackState } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentCallbackState';
 import { ViewOpenRecordInType } from '@/views/types/ViewOpenRecordInType';
 import { useRecoilCallback } from 'recoil';
 import { useNavigateApp } from '~/hooks/useNavigateApp';
@@ -20,17 +21,17 @@ export const useOpenRecordFromIndexView = () => {
   const navigate = useNavigateApp();
   const { openRecordInCommandMenu } = useOpenRecordInCommandMenu();
 
-  const currentRecordFilters = useRecoilComponentCallbackStateV2(
+  const currentRecordFilters = useRecoilComponentCallbackState(
     currentRecordFiltersComponentState,
     recordIndexId,
   );
 
-  const currentRecordSorts = useRecoilComponentCallbackStateV2(
+  const currentRecordSorts = useRecoilComponentCallbackState(
     currentRecordSortsComponentState,
     recordIndexId,
   );
 
-  const currentRecordFilterGroups = useRecoilComponentCallbackStateV2(
+  const currentRecordFilterGroups = useRecoilComponentCallbackState(
     currentRecordFilterGroupsComponentState,
     recordIndexId,
   );
@@ -67,7 +68,10 @@ export const useOpenRecordFromIndexView = () => {
           },
         );
 
-        if (recordIndexOpenRecordIn === ViewOpenRecordInType.SIDE_PANEL) {
+        if (
+          recordIndexOpenRecordIn === ViewOpenRecordInType.SIDE_PANEL &&
+          canOpenObjectInSidePanel(objectNameSingular)
+        ) {
           openRecordInCommandMenu({
             recordId,
             objectNameSingular,

@@ -1,4 +1,4 @@
-import { verifyEmailNextPathState } from '@/app/states/verifyEmailNextPathState';
+import { verifyEmailRedirectPathState } from '@/app/states/verifyEmailRedirectPathState';
 import { SubTitle } from '@/auth/components/SubTitle';
 import { Title } from '@/auth/components/Title';
 import { useAuth } from '@/auth/hooks/useAuth';
@@ -9,6 +9,8 @@ import { TrialCard } from '@/billing/components/TrialCard';
 import { useHandleCheckoutSession } from '@/billing/hooks/useHandleCheckoutSession';
 import { isBillingPriceLicensed } from '@/billing/utils/isBillingPriceLicensed';
 import { billingState } from '@/client-config/states/billingState';
+import { calendarBookingPageIdState } from '@/client-config/states/calendarBookingPageIdState';
+import { AppPath } from '@/types/AppPath';
 import { Modal } from '@/ui/layout/modal/components/Modal';
 import styled from '@emotion/styled';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -23,9 +25,9 @@ import {
 } from 'twenty-ui/navigation';
 import {
   BillingPlanKey,
-  BillingPriceLicensedDto,
+  type BillingPriceLicensedDto,
   useBillingBaseProductPricesQuery,
-} from '~/generated/graphql';
+} from '~/generated-metadata/graphql';
 
 const StyledSubscriptionContainer = styled.div<{
   withLongerMarginBottom: boolean;
@@ -97,11 +99,13 @@ export const ChooseYourPlan = () => {
     billingCheckoutSessionState,
   );
 
-  const [verifyEmailNextPath, setVerifyEmailNextPath] = useRecoilState(
-    verifyEmailNextPathState,
+  const calendarBookingPageId = useRecoilValue(calendarBookingPageIdState);
+
+  const [verifyEmailRedirectPath, setVerifyEmailRedirectPath] = useRecoilState(
+    verifyEmailRedirectPathState,
   );
-  if (isDefined(verifyEmailNextPath)) {
-    setVerifyEmailNextPath(undefined);
+  if (isDefined(verifyEmailRedirectPath)) {
+    setVerifyEmailRedirectPath(undefined);
   }
   const { data: plans } = useBillingBaseProductPricesQuery();
 
@@ -154,6 +158,7 @@ export const ChooseYourPlan = () => {
     recurringInterval: billingCheckoutSession.interval,
     plan: billingCheckoutSession.plan,
     requirePaymentMethod: billingCheckoutSession.requirePaymentMethod,
+    successUrlPath: AppPath.PlanRequiredSuccess,
   });
 
   const handleTrialPeriodChange = (withCreditCard: boolean) => {
@@ -250,7 +255,11 @@ export const ChooseYourPlan = () => {
               <Trans>Change Plan</Trans>
             </ClickToActionLink>
             <span />
-            <ClickToActionLink href={CAL_LINK} target="_blank" rel="noreferrer">
+            <ClickToActionLink
+              href={calendarBookingPageId ? AppPath.BookCall : CAL_LINK}
+              target={calendarBookingPageId ? '_self' : '_blank'}
+              rel={calendarBookingPageId ? '' : 'noreferrer'}
+            >
               <Trans>Book a Call</Trans>
             </ClickToActionLink>
           </StyledLinkGroup>

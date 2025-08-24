@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { useCreateOneDatabaseConnection } from '@/databases/hooks/useCreateOneDatabaseConnection';
 import { getForeignDataWrapperType } from '@/databases/utils/getForeignDataWrapperType';
@@ -17,15 +17,15 @@ import { useIsSettingsIntegrationEnabled } from '@/settings/integrations/hooks/u
 import { useSettingsIntegrationCategories } from '@/settings/integrations/hooks/useSettingsIntegrationCategories';
 import { AppPath } from '@/types/AppPath';
 import { SettingsPath } from '@/types/SettingsPath';
-import { SnackBarVariant } from '@/ui/feedback/snack-bar-manager/components/SnackBar';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
-import { CreateRemoteServerInput } from '~/generated-metadata/graphql';
+import { ApolloError } from '@apollo/client';
+import { H2Title } from 'twenty-ui/display';
+import { Section } from 'twenty-ui/layout';
+import { type CreateRemoteServerInput } from '~/generated-metadata/graphql';
 import { useNavigateApp } from '~/hooks/useNavigateApp';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
 import { getSettingsPath } from '~/utils/navigation/getSettingsPath';
-import { H2Title } from 'twenty-ui/display';
-import { Section } from 'twenty-ui/layout';
 
 const createRemoteServerInputPostgresSchema =
   settingsIntegrationPostgreSQLConnectionFormSchema.transform<CreateRemoteServerInput>(
@@ -79,7 +79,7 @@ export const SettingsIntegrationNewDatabaseConnection = () => {
   );
 
   const { createOneDatabaseConnection } = useCreateOneDatabaseConnection();
-  const { enqueueSnackBar } = useSnackBar();
+  const { enqueueErrorSnackBar } = useSnackBar();
 
   const isIntegrationEnabled = useIsSettingsIntegrationEnabled(databaseKey);
 
@@ -131,8 +131,8 @@ export const SettingsIntegrationNewDatabaseConnection = () => {
         connectionId,
       });
     } catch (error) {
-      enqueueSnackBar((error as Error).message, {
-        variant: SnackBarVariant.Error,
+      enqueueErrorSnackBar({
+        apolloError: error instanceof ApolloError ? error : undefined,
       });
     }
   };

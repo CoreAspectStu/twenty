@@ -1,6 +1,6 @@
 import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
 import { DEFAULT_QUERY_PAGE_SIZE } from '@/object-record/constants/DefaultQueryPageSize';
-import { UseFindManyRecordsParams } from '@/object-record/hooks/useFetchMoreRecordsWithPagination';
+import { type UseFindManyRecordsParams } from '@/object-record/hooks/useFetchMoreRecordsWithPagination';
 import { useLazyFindManyRecords } from '@/object-record/hooks/useLazyFindManyRecords';
 import { useCallback, useState } from 'react';
 import { isDefined } from 'twenty-shared/utils';
@@ -94,9 +94,9 @@ export const useLazyFetchAllRecords = <T>({
 
       const rawResult = await fetchMoreRecordsLazy();
 
-      const fetchMoreResult = rawResult?.data?.[objectMetadataItem.namePlural];
+      const fetchMoreResult = rawResult?.data;
 
-      for (const edge of fetchMoreResult.edges) {
+      for (const edge of fetchMoreResult?.edges ?? []) {
         records.push(edge.node);
       }
 
@@ -106,11 +106,11 @@ export const useLazyFetchAllRecords = <T>({
         displayType: totalCount ? 'percentage' : 'number',
       });
 
-      if (fetchMoreResult.pageInfo.hasNextPage === false) {
+      if (fetchMoreResult?.pageInfo.hasNextPage === false) {
         break;
       }
 
-      lastCursor = fetchMoreResult.pageInfo.endCursor ?? null;
+      lastCursor = fetchMoreResult?.pageInfo.endCursor ?? null;
     }
 
     setIsDownloading(false);

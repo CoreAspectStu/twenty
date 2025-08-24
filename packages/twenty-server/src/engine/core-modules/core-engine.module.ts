@@ -6,10 +6,11 @@ import { WorkspaceQueryRunnerModule } from 'src/engine/api/graphql/workspace-que
 import { ActorModule } from 'src/engine/core-modules/actor/actor.module';
 import { AdminPanelModule } from 'src/engine/core-modules/admin-panel/admin-panel.module';
 import { AiModule } from 'src/engine/core-modules/ai/ai.module';
-import { aiModuleFactory } from 'src/engine/core-modules/ai/ai.module-factory';
+import { ApiKeyModule } from 'src/engine/core-modules/api-key/api-key.module';
 import { AppTokenModule } from 'src/engine/core-modules/app-token/app-token.module';
 import { ApprovedAccessDomainModule } from 'src/engine/core-modules/approved-access-domain/approved-access-domain.module';
 import { AuthModule } from 'src/engine/core-modules/auth/auth.module';
+import { BillingWebhookModule } from 'src/engine/core-modules/billing-webhook/billing-webhook.module';
 import { BillingModule } from 'src/engine/core-modules/billing/billing.module';
 import { CacheStorageModule } from 'src/engine/core-modules/cache-storage/cache-storage.module';
 import { TimelineCalendarEventModule } from 'src/engine/core-modules/calendar/timeline-calendar-event.module';
@@ -22,6 +23,7 @@ import { FeatureFlagModule } from 'src/engine/core-modules/feature-flag/feature-
 import { FileStorageModule } from 'src/engine/core-modules/file-storage/file-storage.module';
 import { FileStorageService } from 'src/engine/core-modules/file-storage/file-storage.service';
 import { HealthModule } from 'src/engine/core-modules/health/health.module';
+import { ImapSmtpCaldavModule } from 'src/engine/core-modules/imap-smtp-caldav-connection/imap-smtp-caldav-connection.module';
 import { LabModule } from 'src/engine/core-modules/lab/lab.module';
 import { LoggerModule } from 'src/engine/core-modules/logger/logger.module';
 import { loggerModuleFactory } from 'src/engine/core-modules/logger/logger.module-factory';
@@ -40,12 +42,15 @@ import { TelemetryModule } from 'src/engine/core-modules/telemetry/telemetry.mod
 import { TwentyConfigModule } from 'src/engine/core-modules/twenty-config/twenty-config.module';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UserModule } from 'src/engine/core-modules/user/user.module';
+import { CoreViewModule } from 'src/engine/core-modules/view/view.module';
+import { WebhookModule } from 'src/engine/core-modules/webhook/webhook.module';
 import { WorkflowApiModule } from 'src/engine/core-modules/workflow/workflow-api.module';
 import { WorkspaceInvitationModule } from 'src/engine/core-modules/workspace-invitation/workspace-invitation.module';
 import { WorkspaceModule } from 'src/engine/core-modules/workspace/workspace.module';
 import { RoleModule } from 'src/engine/metadata-modules/role/role.module';
 import { SubscriptionsModule } from 'src/engine/subscriptions/subscriptions.module';
 import { WorkspaceEventEmitterModule } from 'src/engine/workspace-event-emitter/workspace-event-emitter.module';
+import { GeoMapModule } from 'src/engine/core-modules/geo-map/geo-map-module';
 
 import { AuditModule } from './audit/audit.module';
 import { ClientConfigModule } from './client-config/client-config.module';
@@ -58,6 +63,7 @@ import { FileModule } from './file/file.module';
     AuditModule,
     AuthModule,
     BillingModule,
+    BillingWebhookModule,
     ClientConfigModule,
     FeatureFlagModule,
     FileModule,
@@ -80,7 +86,9 @@ import { FileModule } from './file/file.module';
     RoleModule,
     RedisClientModule,
     WorkspaceQueryRunnerModule,
+    GeoMapModule,
     SubscriptionsModule,
+    ImapSmtpCaldavModule,
     FileStorageModule.forRoot(),
     LoggerModule.forRootAsync({
       useFactory: loggerModuleFactory,
@@ -103,15 +111,15 @@ import { FileModule } from './file/file.module';
       wildcard: true,
     }),
     CacheStorageModule,
-    AiModule.forRoot({
-      useFactory: aiModuleFactory,
-      inject: [TwentyConfigService],
-    }),
+    AiModule,
     ServerlessModule.forRootAsync({
       useFactory: serverlessModuleFactory,
       inject: [TwentyConfigService, FileStorageService],
     }),
     SearchModule,
+    ApiKeyModule,
+    WebhookModule,
+    CoreViewModule,
   ],
   exports: [
     AuditModule,
@@ -123,6 +131,7 @@ import { FileModule } from './file/file.module';
     WorkspaceModule,
     WorkspaceInvitationModule,
     WorkspaceSSOModule,
+    ImapSmtpCaldavModule,
   ],
 })
 export class CoreEngineModule {}

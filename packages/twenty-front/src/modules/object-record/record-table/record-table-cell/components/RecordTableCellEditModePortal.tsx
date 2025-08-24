@@ -1,9 +1,9 @@
 import { RecordTableCellPortalWrapper } from '@/object-record/record-table/record-table-cell/components/RecordTableCellPortalWrapper';
-import { useRecoilComponentValueV2 } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValueV2';
+import { useRecoilComponentValue } from '@/ui/utilities/state/component-state/hooks/useRecoilComponentValue';
 
-import { RecordTableFocusModeHotkeysSetterEffect } from '@/object-record/record-table/components/RecordTableFocusModeHotkeysSetterEffect';
 import { RecordTableCellEditMode } from '@/object-record/record-table/record-table-cell/components/RecordTableCellEditMode';
 import { RecordTableCellFieldInput } from '@/object-record/record-table/record-table-cell/components/RecordTableCellFieldInput';
+import { RecordTableCellHotkeysEffect } from '@/object-record/record-table/record-table-cell/components/RecordTableCellHotkeysEffect';
 import { recordTableCellEditModePositionComponentState } from '@/object-record/record-table/states/recordTableCellEditModePositionComponentState';
 import { recordTableFocusPositionComponentState } from '@/object-record/record-table/states/recordTableFocusPositionComponentState';
 import styled from '@emotion/styled';
@@ -17,11 +17,11 @@ const StyledRecordTableCellHoveredPortal = styled.div`
 `;
 
 export const RecordTableCellEditModePortal = () => {
-  const focusedCellPosition = useRecoilComponentValueV2(
+  const focusedCellPosition = useRecoilComponentValue(
     recordTableFocusPositionComponentState,
   );
 
-  const currentTableCellInEditModePosition = useRecoilComponentValueV2(
+  const currentTableCellInEditModePosition = useRecoilComponentValue(
     recordTableCellEditModePositionComponentState,
   );
 
@@ -38,7 +38,7 @@ export const RecordTableCellEditModePortal = () => {
           </RecordTableCellEditMode>
         </StyledRecordTableCellHoveredPortal>
       )}
-      <RecordTableFocusModeHotkeysSetterEffect />
+      <RecordTableCellHotkeysEffect />
     </RecordTableCellPortalWrapper>
   );
 };

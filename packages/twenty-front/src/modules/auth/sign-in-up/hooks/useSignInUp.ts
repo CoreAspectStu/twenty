@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
-import { SubmitHandler, UseFormReturn } from 'react-hook-form';
+import { type SubmitHandler, type UseFormReturn } from 'react-hook-form';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 
-import { Form } from '@/auth/sign-in-up/hooks/useSignInUpForm';
+import { type Form } from '@/auth/sign-in-up/hooks/useSignInUpForm';
 import { signInUpModeState } from '@/auth/states/signInUpModeState';
 import {
   SignInUpStep,
@@ -10,19 +10,18 @@ import {
 } from '@/auth/states/signInUpStepState';
 import { SignInUpMode } from '@/auth/types/signInUpMode';
 import { useReadCaptchaToken } from '@/captcha/hooks/useReadCaptchaToken';
-import { useRequestFreshCaptchaToken } from '@/captcha/hooks/useRequestFreshCaptchaToken';
 import { useBuildSearchParamsFromUrlSyncedStates } from '@/domain-manager/hooks/useBuildSearchParamsFromUrlSyncedStates';
+import { useIsCurrentLocationOnAWorkspace } from '@/domain-manager/hooks/useIsCurrentLocationOnAWorkspace';
 import { AppPath } from '@/types/AppPath';
-import { SnackBarVariant } from '@/ui/feedback/snack-bar-manager/components/SnackBar';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
+import { ApolloError } from '@apollo/client';
 import { useRecoilState } from 'recoil';
 import { buildAppPathWithQueryParams } from '~/utils/buildAppPathWithQueryParams';
 import { isMatchingLocation } from '~/utils/isMatchingLocation';
 import { useAuth } from '../../hooks/useAuth';
-import { useIsCurrentLocationOnAWorkspace } from '@/domain-manager/hooks/useIsCurrentLocationOnAWorkspace';
 
 export const useSignInUp = (form: UseFormReturn<Form>) => {
-  const { enqueueSnackBar } = useSnackBar();
+  const { enqueueErrorSnackBar } = useSnackBar();
 
   const [signInUpStep, setSignInUpStep] = useRecoilState(signInUpStepState);
   const [signInUpMode, setSignInUpMode] = useRecoilState(signInUpModeState);
@@ -47,16 +46,14 @@ export const useSignInUp = (form: UseFormReturn<Form>) => {
     checkUserExists: { checkUserExistsQuery },
   } = useAuth();
 
-  const { requestFreshCaptchaToken } = useRequestFreshCaptchaToken();
   const { readCaptchaToken } = useReadCaptchaToken();
 
   const { buildSearchParamsFromUrlSyncedStates } =
     useBuildSearchParamsFromUrlSyncedStates();
 
   const continueWithEmail = useCallback(() => {
-    requestFreshCaptchaToken();
     setSignInUpStep(SignInUpStep.Email);
-  }, [requestFreshCaptchaToken, setSignInUpStep]);
+  }, [setSignInUpStep]);
 
   const continueWithCredentials = useCallback(async () => {
     const token = await readCaptchaToken();
@@ -69,12 +66,9 @@ export const useSignInUp = (form: UseFormReturn<Form>) => {
         captchaToken: token,
       },
       onError: (error) => {
-        enqueueSnackBar(`${error.message}`, {
-          variant: SnackBarVariant.Error,
-        });
+        enqueueErrorSnackBar({ apolloError: error });
       },
       onCompleted: (data) => {
-        requestFreshCaptchaToken();
         setSignInUpMode(
           data?.checkUserExists.exists
             ? SignInUpMode.SignIn
@@ -87,8 +81,7 @@ export const useSignInUp = (form: UseFormReturn<Form>) => {
     readCaptchaToken,
     form,
     checkUserExistsQuery,
-    enqueueSnackBar,
-    requestFreshCaptchaToken,
+    enqueueErrorSnackBar,
     setSignInUpStep,
     setSignInUpMode,
   ]);
@@ -137,7 +130,7 @@ export const useSignInUp = (form: UseFormReturn<Form>) => {
           );
         }
 
-        const verifyEmailNextPath = buildAppPathWithQueryParams(
+        const verifyEmailRedirectPath = buildAppPathWithQueryParams(
           AppPath.PlanRequired,
           await buildSearchParamsFromUrlSyncedStates(),
         );
@@ -148,14 +141,12 @@ export const useSignInUp = (form: UseFormReturn<Form>) => {
           workspaceInviteHash,
           workspacePersonalInviteToken,
           captchaToken: token,
-          verifyEmailNextPath,
+          verifyEmailRedirectPath,
         });
-      } catch (err: any) {
-        enqueueSnackBar(err?.message, {
-          variant: SnackBarVariant.Error,
+      } catch (error: any) {
+        enqueueErrorSnackBar({
+          ...(error instanceof ApolloError ? { apolloError: error } : {}),
         });
-      } finally {
-        requestFreshCaptchaToken();
       }
     },
     [
@@ -168,8 +159,7 @@ export const useSignInUp = (form: UseFormReturn<Form>) => {
       signUpWithCredentialsInWorkspace,
       workspaceInviteHash,
       workspacePersonalInviteToken,
-      enqueueSnackBar,
-      requestFreshCaptchaToken,
+      enqueueErrorSnackBar,
       buildSearchParamsFromUrlSyncedStates,
       isOnAWorkspace,
     ],

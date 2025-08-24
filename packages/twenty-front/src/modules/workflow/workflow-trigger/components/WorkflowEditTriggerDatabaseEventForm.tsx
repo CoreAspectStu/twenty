@@ -1,7 +1,6 @@
 import { useFilteredObjectMetadataItems } from '@/object-metadata/hooks/useFilteredObjectMetadataItems';
-import { FieldMultiSelectValue } from '@/object-record/record-field/types/FieldMetadata';
+import { type FieldMultiSelectValue } from '@/object-record/record-field/ui/types/FieldMetadata';
 import { SelectControl } from '@/ui/input/components/SelectControl';
-import { SelectHotkeyScope } from '@/ui/input/types/SelectHotkeyScope';
 import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuHeader } from '@/ui/layout/dropdown/components/DropdownMenuHeader/DropdownMenuHeader';
@@ -9,15 +8,17 @@ import { DropdownMenuHeaderLeftComponent } from '@/ui/layout/dropdown/components
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { DropdownMenuSearchInput } from '@/ui/layout/dropdown/components/DropdownMenuSearchInput';
 import { DropdownMenuSeparator } from '@/ui/layout/dropdown/components/DropdownMenuSeparator';
-import { useDropdown } from '@/ui/layout/dropdown/hooks/useDropdown';
+import { GenericDropdownContentWidth } from '@/ui/layout/dropdown/constants/GenericDropdownContentWidth';
+import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { WorkflowFieldsMultiSelect } from '@/workflow/components/WorkflowEditUpdateEventFieldsMultiSelect';
-import { WorkflowDatabaseEventTrigger } from '@/workflow/types/Workflow';
+import { type WorkflowDatabaseEventTrigger } from '@/workflow/types/Workflow';
 import { splitWorkflowTriggerEventName } from '@/workflow/utils/splitWorkflowTriggerEventName';
 import { WorkflowStepBody } from '@/workflow/workflow-steps/components/WorkflowStepBody';
 import { WorkflowStepHeader } from '@/workflow/workflow-steps/components/WorkflowStepHeader';
+import { getTriggerDefaultLabel } from '@/workflow/workflow-trigger/utils/getTriggerDefaultLabel';
 import { getTriggerHeaderType } from '@/workflow/workflow-trigger/utils/getTriggerHeaderType';
 import { getTriggerIcon } from '@/workflow/workflow-trigger/utils/getTriggerIcon';
-import { getTriggerDefaultLabel } from '@/workflow/workflow-trigger/utils/getTriggerLabel';
+import { getTriggerIconColor } from '@/workflow/workflow-trigger/utils/getTriggerIconColor';
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Trans } from '@lingui/react/macro';
@@ -25,7 +26,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 import { IconChevronLeft, IconSettings, useIcons } from 'twenty-ui/display';
 import { MenuItem } from 'twenty-ui/navigation';
-import { GenericDropdownContentWidth } from '@/ui/layout/dropdown/constants/GenericDropdownContentWidth';
 
 const StyledLabel = styled.span`
   color: ${({ theme }) => theme.font.color.light};
@@ -72,7 +72,9 @@ export const WorkflowEditTriggerDatabaseEventForm = ({
   const { getIcon } = useIcons();
   const [searchInputValue, setSearchInputValue] = useState('');
   const [isSystemObjectsOpen, setIsSystemObjectsOpen] = useState(false);
-  const { closeDropdown } = useDropdown('workflow-edit-trigger-record-type');
+  const dropdownId = 'workflow-edit-trigger-record-type';
+
+  const { closeDropdown } = useCloseDropdown();
 
   const { objectMetadataItems } = useFilteredObjectMetadataItems();
 
@@ -132,7 +134,7 @@ export const WorkflowEditTriggerDatabaseEventForm = ({
         eventName: `${value}.${triggerEvent.event}`,
       },
     });
-    closeDropdown();
+    closeDropdown(dropdownId);
   };
 
   const handleFieldsChange = (fields: FieldMultiSelectValue | string) => {
@@ -180,7 +182,7 @@ export const WorkflowEditTriggerDatabaseEventForm = ({
           });
         }}
         Icon={getIcon(headerIcon)}
-        iconColor={theme.font.color.tertiary}
+        iconColor={getTriggerIconColor({ theme, triggerType: trigger.type })}
         initialTitle={defaultLabel}
         headerType={headerType}
         disabled={triggerOptions.readonly}
@@ -266,7 +268,6 @@ export const WorkflowEditTriggerDatabaseEventForm = ({
                   ))}
               </>
             }
-            dropdownHotkeyScope={{ scope: SelectHotkeyScope.Select }}
             dropdownOffset={{ y: parseInt(theme.spacing(1), 10) }}
           />
         </StyledRecordTypeSelectContainer>

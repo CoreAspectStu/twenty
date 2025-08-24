@@ -7,14 +7,14 @@ import { Repository } from 'typeorm';
 
 import {
   ActiveOrSuspendedWorkspacesMigrationCommandRunner,
-  RunOnWorkspaceArgs,
+  type RunOnWorkspaceArgs,
 } from 'src/database/commands/command-runners/active-or-suspended-workspaces-migration.command-runner';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { Workspace } from 'src/engine/core-modules/workspace/workspace.entity';
 import { TwentyORMGlobalManager } from 'src/engine/twenty-orm/twenty-orm-global.manager';
 import { SyncWorkspaceMetadataCommand } from 'src/engine/workspace-manager/workspace-sync-metadata/commands/sync-workspace-metadata.command';
 import {
-  CompareVersionMajorAndMinorReturnType,
+  type CompareVersionMajorAndMinorReturnType,
   compareVersionMajorAndMinor,
 } from 'src/utils/version/compare-version-minor-and-major';
 import { getPreviousVersion } from 'src/utils/version/get-previous-version';
@@ -114,10 +114,13 @@ export abstract class UpgradeCommandRunner extends ActiveOrSuspendedWorkspacesMi
         await this.syncWorkspaceMetadataCommand.runOnWorkspace(args);
         await this.runAfterSyncMetadata(args);
 
-        await this.workspaceRepository.update(
-          { id: workspaceId },
-          { version: this.currentAppVersion.version },
-        );
+        if (!options.dryRun) {
+          await this.workspaceRepository.update(
+            { id: workspaceId },
+            { version: this.currentAppVersion.version },
+          );
+        }
+
         this.logger.log(
           chalk.blue(`Upgrade for workspace ${workspaceId} completed.`),
         );

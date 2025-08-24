@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
 
-import { FeatureFlagMap } from 'src/engine/core-modules/feature-flag/interfaces/feature-flag-map.interface';
+import { type FeatureFlagMap } from 'src/engine/core-modules/feature-flag/interfaces/feature-flag-map.interface';
 
-import { FeatureFlagDTO } from 'src/engine/core-modules/feature-flag/dtos/feature-flag-dto';
+import { type FeatureFlagDTO } from 'src/engine/core-modules/feature-flag/dtos/feature-flag-dto';
 import { FeatureFlagKey } from 'src/engine/core-modules/feature-flag/enums/feature-flag-key.enum';
 import { FeatureFlag } from 'src/engine/core-modules/feature-flag/feature-flag.entity';
 import {
@@ -73,17 +73,8 @@ export class FeatureFlagService {
         },
       );
 
-      if (keys.includes(FeatureFlagKey.IS_PERMISSIONS_V2_ENABLED)) {
-        await this.workspacePermissionsCacheService.recomputeRolesPermissionsCache(
-          { workspaceId, ignoreLock: true },
-        );
-      }
-
       await this.workspaceFeatureFlagsMapCacheService.recomputeFeatureFlagsMapCache(
-        {
-          workspaceId,
-          ignoreLock: true,
-        },
+        { workspaceId },
       );
     }
   }
@@ -138,17 +129,8 @@ export class FeatureFlagService {
     const result = await this.featureFlagRepository.save(featureFlagToSave);
 
     await this.workspaceFeatureFlagsMapCacheService.recomputeFeatureFlagsMapCache(
-      {
-        workspaceId,
-        ignoreLock: true,
-      },
+      { workspaceId },
     );
-
-    if (featureFlag === FeatureFlagKey.IS_PERMISSIONS_V2_ENABLED) {
-      await this.workspacePermissionsCacheService.recomputeRolesPermissionsCache(
-        { workspaceId, ignoreLock: true },
-      );
-    }
 
     return result;
   }

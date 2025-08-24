@@ -1,9 +1,8 @@
-import { LABEL_IDENTIFIER_FIELD_METADATA_TYPES } from '@/object-metadata/constants/LabelIdentifierFieldMetadataTypes';
 import { useFieldMetadataItem } from '@/object-metadata/hooks/useFieldMetadataItem';
 import { useGetRelationMetadata } from '@/object-metadata/hooks/useGetRelationMetadata';
 import { useUpdateOneObjectMetadataItem } from '@/object-metadata/hooks/useUpdateOneObjectMetadataItem';
 import { CoreObjectNameSingular } from '@/object-metadata/types/CoreObjectNameSingular';
-import { FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
+import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { isLabelIdentifierField } from '@/object-metadata/utils/isLabelIdentifierField';
 import { useDeleteRecordFromCache } from '@/object-record/cache/hooks/useDeleteRecordFromCache';
 import { prefetchViewsState } from '@/prefetch/states/prefetchViewsState';
@@ -15,17 +14,22 @@ import { SettingsPath } from '@/types/SettingsPath';
 import { TableCell } from '@/ui/layout/table/components/TableCell';
 import { TableRow } from '@/ui/layout/table/components/TableRow';
 import { navigationMemorizedUrlState } from '@/ui/navigation/states/navigationMemorizedUrlState';
+import { type View } from '@/views/types/View';
+import { useFeatureFlagsMap } from '@/workspace/hooks/useFeatureFlagsMap';
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useMemo } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { isDefined } from 'twenty-shared/utils';
+import {
+  isDefined,
+  isLabelIdentifierFieldMetadataTypes,
+} from 'twenty-shared/utils';
 import { IconMinus, IconPlus, useIcons } from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 import { UndecoratedLink } from 'twenty-ui/navigation';
-import { RelationType } from '~/generated-metadata/graphql';
+import { FeatureFlagKey, RelationType } from '~/generated-metadata/graphql';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
-import { SettingsObjectDetailTableItem } from '~/pages/settings/data-model/types/SettingsObjectDetailTableItem';
+import { type SettingsObjectDetailTableItem } from '~/pages/settings/data-model/types/SettingsObjectDetailTableItem';
 import { getSettingsPath } from '~/utils/navigation/getSettingsPath';
 import { RELATION_TYPES } from '../../constants/RelationTypes';
 import { SettingsObjectFieldDataType } from './SettingsObjectFieldDataType';
@@ -37,7 +41,7 @@ type SettingsObjectFieldItemTableRowProps = {
 };
 
 export const StyledObjectFieldTableRow = styled(TableRow)`
-  grid-template-columns: 180px 148px 148px 36px;
+  grid-auto-columns: 180px 148px 148px 36px;
 `;
 
 const StyledNameTableCell = styled(TableCell)`
@@ -102,7 +106,7 @@ export const SettingsObjectFieldItemTableRow = ({
   const canBeSetAsLabelIdentifier =
     objectMetadataItem.isCustom &&
     !isLabelIdentifier &&
-    LABEL_IDENTIFIER_FIELD_METADATA_TYPES.includes(fieldMetadataItem.type);
+    isLabelIdentifierFieldMetadataTypes(fieldMetadataItem.type);
 
   const linkToNavigate = getSettingsPath(SettingsPath.ObjectFieldEdit, {
     objectNamePlural: objectMetadataItem.namePlural,
@@ -120,6 +124,9 @@ export const SettingsObjectFieldItemTableRow = ({
     objectNameSingular: CoreObjectNameSingular.View,
   });
 
+  const featureFlagMap = useFeatureFlagsMap();
+  const isCoreViewEnabled = featureFlagMap[FeatureFlagKey.IS_CORE_VIEW_ENABLED];
+
   const handleDisableField = async (
     activeFieldMetadatItem: FieldMetadataItem,
   ) => {
@@ -128,16 +135,20 @@ export const SettingsObjectFieldItemTableRow = ({
       objectMetadataItem.id,
     );
 
-    const deletedViewIds = prefetchViews
-      .map((view) => {
-        if (view.kanbanFieldMetadataId === activeFieldMetadatItem.id) {
-          deleteViewFromCache(view);
-          return view.id;
-        }
+    // TODO: Add optimistic rendering for core views
+    const deletedViewIds = isCoreViewEnabled
+      ? []
+      : (prefetchViews as View[])
+          .map((view) => {
+            // TODO: replace with viewGroups.fieldMetadataId
+            if (view.kanbanFieldMetadataId === activeFieldMetadatItem.id) {
+              deleteViewFromCache(view);
+              return view.id;
+            }
 
-        return null;
-      })
-      .filter(isDefined);
+            return null;
+          })
+          .filter(isDefined);
 
     const [baseUrl, queryParams] = navigationMemorizedUrl.includes('?')
       ? navigationMemorizedUrl.split('?')
@@ -267,7 +278,7 @@ export const SettingsObjectFieldItemTableRow = ({
           mode === 'view' ? (
             <SettingsObjectFieldActiveActionDropdown
               isCustomField={fieldMetadataItem.isCustom === true}
-              scopeKey={fieldMetadataItem.id}
+              fieldMetadataItemId={fieldMetadataItem.id}
               onEdit={() =>
                 navigate(SettingsPath.ObjectFieldEdit, {
                   objectNamePlural: objectMetadataItem.namePlural,
@@ -297,7 +308,7 @@ export const SettingsObjectFieldItemTableRow = ({
         ) : mode === 'view' ? (
           <SettingsObjectFieldInactiveActionDropdown
             isCustomField={fieldMetadataItem.isCustom === true}
-            scopeKey={fieldMetadataItem.id}
+            fieldMetadataItemId={fieldMetadataItem.id}
             onEdit={() =>
               navigate(SettingsPath.ObjectFieldEdit, {
                 objectNamePlural: objectMetadataItem.namePlural,

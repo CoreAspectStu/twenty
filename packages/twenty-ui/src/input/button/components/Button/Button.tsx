@@ -1,12 +1,12 @@
 import isPropValid from '@emotion/is-prop-valid';
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import { IconComponent } from '@ui/display/icon/types/IconComponent';
+import { type IconComponent } from '@ui/display/icon/types/IconComponent';
 import { ButtonHotkeys } from '@ui/input/button/components/Button/internal/ButtonHotKeys';
 import { ButtonIcon } from '@ui/input/button/components/Button/internal/ButtonIcon';
 import { ButtonSoon } from '@ui/input/button/components/Button/internal/ButtonSoon';
 import { useIsMobile } from '@ui/utilities';
-import { ClickOutsideAttributes } from '@ui/utilities/types/ClickOutsideAttributes';
+import { type ClickOutsideAttributes } from '@ui/utilities/types/ClickOutsideAttributes';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { isDefined } from 'twenty-shared/utils';
@@ -293,7 +293,9 @@ const StyledButton = styled('button', {
                   }`
                 : 'none'};
               color: ${!inverted
-                ? theme.font.color.danger
+                ? !disabled
+                  ? theme.font.color.danger
+                  : theme.color.red20
                 : theme.font.color.inverted};
               &:hover {
                 background: ${!inverted

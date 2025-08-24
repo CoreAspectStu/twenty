@@ -1,24 +1,25 @@
 import { DEFAULT_WORKSPACE_LOGO } from '@/ui/navigation/navigation-drawer/constants/DefaultWorkspaceLogo';
 
 import { useAuth } from '@/auth/hooks/useAuth';
+import { availableWorkspacesState } from '@/auth/states/availableWorkspacesState';
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
+import { countAvailableWorkspaces } from '@/auth/utils/availableWorkspacesUtils';
 import { useBuildWorkspaceUrl } from '@/domain-manager/hooks/useBuildWorkspaceUrl';
 import { useRedirectToWorkspaceDomain } from '@/domain-manager/hooks/useRedirectToWorkspaceDomain';
 import { AppPath } from '@/types/AppPath';
 import { SettingsPath } from '@/types/SettingsPath';
-import { SnackBarVariant } from '@/ui/feedback/snack-bar-manager/components/SnackBar';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { SelectHotkeyScope } from '@/ui/input/types/SelectHotkeyScope';
 import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuHeader } from '@/ui/layout/dropdown/components/DropdownMenuHeader/DropdownMenuHeader';
 import { DropdownMenuHeaderLeftComponent } from '@/ui/layout/dropdown/components/DropdownMenuHeader/internal/DropdownMenuHeaderLeftComponent';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { DropdownMenuSeparator } from '@/ui/layout/dropdown/components/DropdownMenuSeparator';
-import { useDropdown } from '@/ui/layout/dropdown/hooks/useDropdown';
+import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { MULTI_WORKSPACE_DROPDOWN_ID } from '@/ui/navigation/navigation-drawer/constants/MultiWorkspaceDropdownId';
 import { multiWorkspaceDropdownState } from '@/ui/navigation/navigation-drawer/states/multiWorkspaceDropdownState';
 import { useColorScheme } from '@/ui/theme/hooks/useColorScheme';
+import { type ApolloError } from '@apollo/client';
 import styled from '@emotion/styled';
 import { useLingui } from '@lingui/react/macro';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -37,13 +38,11 @@ import {
   UndecoratedLink,
 } from 'twenty-ui/navigation';
 import {
+  type AvailableWorkspace,
   useSignUpInNewWorkspaceMutation,
-  AvailableWorkspace,
-} from '~/generated/graphql';
+} from '~/generated-metadata/graphql';
 import { getWorkspaceUrl } from '~/utils/getWorkspaceUrl';
 import { getSettingsPath } from '~/utils/navigation/getSettingsPath';
-import { availableWorkspacesState } from '@/auth/states/availableWorkspacesState';
-import { countAvailableWorkspaces } from '@/auth/utils/availableWorkspacesUtils';
 
 const StyledDescription = styled.div`
   color: ${({ theme }) => theme.font.color.light};
@@ -58,9 +57,9 @@ export const MultiWorkspaceDropdownDefaultComponents = () => {
   const availableWorkspacesCount =
     countAvailableWorkspaces(availableWorkspaces);
   const { buildWorkspaceUrl } = useBuildWorkspaceUrl();
-  const { closeDropdown } = useDropdown(MULTI_WORKSPACE_DROPDOWN_ID);
+  const { closeDropdown } = useCloseDropdown();
   const { signOut } = useAuth();
-  const { enqueueSnackBar } = useSnackBar();
+  const { enqueueErrorSnackBar } = useSnackBar();
   const { colorScheme, colorSchemeList } = useColorScheme();
 
   const [signUpInNewWorkspaceMutation] = useSignUpInNewWorkspaceMutation();
@@ -87,9 +86,9 @@ export const MultiWorkspaceDropdownDefaultComponents = () => {
           '_blank',
         );
       },
-      onError: (error: Error) => {
-        enqueueSnackBar(error.message, {
-          variant: SnackBarVariant.Error,
+      onError: (error: ApolloError) => {
+        enqueueErrorSnackBar({
+          apolloError: error,
         });
       },
     });
@@ -118,7 +117,6 @@ export const MultiWorkspaceDropdownDefaultComponents = () => {
               />
             }
             dropdownId={'multi-workspace-dropdown-context-menu'}
-            dropdownHotkeyScope={{ scope: SelectHotkeyScope.Select }}
             dropdownComponents={
               <DropdownContent>
                 <DropdownMenuItemsContainer>
@@ -197,7 +195,9 @@ export const MultiWorkspaceDropdownDefaultComponents = () => {
         />
         <UndecoratedLink
           to={getSettingsPath(SettingsPath.WorkspaceMembersPage)}
-          onClick={closeDropdown}
+          onClick={() => {
+            closeDropdown(MULTI_WORKSPACE_DROPDOWN_ID);
+          }}
         >
           <MenuItem LeftIcon={IconUserPlus} text={t`Invite user`} />
         </UndecoratedLink>

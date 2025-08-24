@@ -1,5 +1,5 @@
 import {
-  CurrentWorkspace,
+  type CurrentWorkspace,
   currentWorkspaceState,
 } from '@/auth/states/currentWorkspaceState';
 import { SettingsOptionCardContentSelect } from '@/settings/components/SettingsOptions/SettingsOptionCardContentSelect';
@@ -10,10 +10,10 @@ import { isDefined } from 'twenty-shared/utils';
 import { H2Title, IconUserPin, useIcons } from 'twenty-ui/display';
 import { Card, Section } from 'twenty-ui/layout';
 import {
-  Role,
-  UpdateWorkspaceMutation,
+  type Role,
+  type UpdateWorkspaceMutation,
   useUpdateWorkspaceMutation,
-} from '~/generated/graphql';
+} from '~/generated-metadata/graphql';
 
 type SettingsRoleDefaultRoleProps = {
   roles: Role[];
@@ -60,8 +60,12 @@ export const SettingsRoleDefaultRole = ({
   const options = roles.map((role) => ({
     label: role.label,
     value: role.id,
-    Icon: getIcon(role.icon),
+    Icon: getIcon(role.icon) ?? IconUserPin,
   }));
+
+  if (options.length === 0) {
+    return null;
+  }
 
   return (
     <Section>

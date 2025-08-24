@@ -1,23 +1,23 @@
-import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
+import { useFormContext } from 'react-hook-form';
 
-import { FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
+import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { SettingsDataModelPreviewFormCard } from '@/settings/data-model/components/SettingsDataModelPreviewFormCard';
 import {
   SettingsDataModelFieldCurrencyForm,
-  SettingsDataModelFieldCurrencyFormValues,
+  type SettingsDataModelFieldCurrencyFormValues,
 } from '@/settings/data-model/fields/forms/currency/components/SettingsDataModelFieldCurrencyForm';
 import { useCurrencySettingsFormInitialValues } from '@/settings/data-model/fields/forms/currency/hooks/useCurrencySettingsFormInitialValues';
 import {
   SettingsDataModelFieldPreviewCard,
-  SettingsDataModelFieldPreviewCardProps,
+  type SettingsDataModelFieldPreviewCardProps,
 } from '@/settings/data-model/fields/preview/components/SettingsDataModelFieldPreviewCard';
 
 type SettingsDataModelFieldCurrencySettingsFormCardProps = {
   disabled?: boolean;
   fieldMetadataItem: Pick<
     FieldMetadataItem,
-    'icon' | 'label' | 'type' | 'defaultValue'
+    'icon' | 'label' | 'type' | 'defaultValue' | 'settings'
   >;
 } & Pick<SettingsDataModelFieldPreviewCardProps, 'objectMetadataItem'>;
 
@@ -31,9 +31,10 @@ export const SettingsDataModelFieldCurrencySettingsFormCard = ({
   fieldMetadataItem,
   objectMetadataItem,
 }: SettingsDataModelFieldCurrencySettingsFormCardProps) => {
-  const { initialDefaultValue } = useCurrencySettingsFormInitialValues({
-    fieldMetadataItem,
-  });
+  const { initialDefaultValue, initialSettingsValue } =
+    useCurrencySettingsFormInitialValues({
+      fieldMetadataItem,
+    });
 
   const { watch: watchFormValue } =
     useFormContext<SettingsDataModelFieldCurrencyFormValues>();
@@ -45,6 +46,7 @@ export const SettingsDataModelFieldCurrencySettingsFormCard = ({
           fieldMetadataItem={{
             ...fieldMetadataItem,
             defaultValue: watchFormValue('defaultValue', initialDefaultValue),
+            settings: watchFormValue('settings', initialSettingsValue),
           }}
           objectMetadataItem={objectMetadataItem}
         />

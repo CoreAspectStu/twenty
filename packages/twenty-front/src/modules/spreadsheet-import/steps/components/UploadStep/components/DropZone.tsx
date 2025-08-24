@@ -1,16 +1,16 @@
 import styled from '@emotion/styled';
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { read, WorkBook } from 'xlsx-ugnis';
+import { read, type WorkBook } from 'xlsx-ugnis';
 
-import { SpreadsheetMaxRecordImportCapacity } from '@/spreadsheet-import/constants/SpreadsheetMaxRecordImportCapacity';
+import { SPREADSHEET_MAX_RECORD_IMPORT_CAPACITY } from '@/spreadsheet-import/constants/SpreadsheetMaxRecordImportCapacity';
 import { useSpreadsheetImportInternal } from '@/spreadsheet-import/hooks/useSpreadsheetImportInternal';
 import { useDownloadFakeRecords } from '@/spreadsheet-import/steps/components/UploadStep/hooks/useDownloadFakeRecords';
 import { readFileAsync } from '@/spreadsheet-import/utils/readFilesAsync';
-import { SnackBarVariant } from '@/ui/feedback/snack-bar-manager/components/SnackBar';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { MainButton } from 'twenty-ui/input';
+import { formatNumber } from '~/utils/format/number';
 
 const StyledContainer = styled.div`
   align-items: center;
@@ -112,7 +112,7 @@ export const DropZone = ({ onContinue, isLoading }: DropZoneProps) => {
 
   const [loading, setLoading] = useState(false);
 
-  const { enqueueSnackBar } = useSnackBar();
+  const { enqueueErrorSnackBar } = useSnackBar();
 
   const { downloadSample } = useDownloadFakeRecords();
 
@@ -131,9 +131,11 @@ export const DropZone = ({ onContinue, isLoading }: DropZoneProps) => {
     onDropRejected: (fileRejections) => {
       setLoading(false);
       fileRejections.forEach((fileRejection) => {
-        enqueueSnackBar(`${fileRejection.file.name} upload rejected`, {
-          detailedMessage: fileRejection.errors[0].message,
-          variant: SnackBarVariant.Error,
+        enqueueErrorSnackBar({
+          message: `${fileRejection.file.name} upload rejected`,
+          options: {
+            detailedMessage: fileRejection.errors[0].message,
+          },
         });
       });
     },
@@ -153,6 +155,10 @@ export const DropZone = ({ onContinue, isLoading }: DropZoneProps) => {
   });
 
   const { t } = useLingui();
+
+  const formatSpreadsheetMaxRecordImportCapacity = formatNumber(
+    SPREADSHEET_MAX_RECORD_IMPORT_CAPACITY,
+  );
 
   return (
     <StyledContainer
@@ -179,7 +185,7 @@ export const DropZone = ({ onContinue, isLoading }: DropZoneProps) => {
           </StyledText>
           <MainButton onClick={open} title={t`Select file`} />
           <StyledFooterText>
-            {t`Max import capacity: ${SpreadsheetMaxRecordImportCapacity} records. Otherwise, consider splitting your file or using the API.`}{' '}
+            {t`Max import capacity: ${formatSpreadsheetMaxRecordImportCapacity} records. Otherwise, consider splitting your file or using the API.`}{' '}
             <StyledTextAction onClick={downloadSample}>
               {t`Download sample file.`}
             </StyledTextAction>

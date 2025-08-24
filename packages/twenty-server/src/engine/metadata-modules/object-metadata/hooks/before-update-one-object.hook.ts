@@ -3,22 +3,19 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 
 import { i18n } from '@lingui/core';
 import {
-  BeforeUpdateOneHook,
-  UpdateOneInputType,
+  type BeforeUpdateOneHook,
+  type UpdateOneInputType,
 } from '@ptc-org/nestjs-query-graphql';
-import { APP_LOCALES, SOURCE_LOCALE } from 'twenty-shared/translations';
+import { type APP_LOCALES, SOURCE_LOCALE } from 'twenty-shared/translations';
 import { isDefined } from 'twenty-shared/utils';
-import { Equal, In, Repository } from 'typeorm';
 
 import { generateMessageId } from 'src/engine/core-modules/i18n/utils/generateMessageId';
-import { FieldMetadataEntity } from 'src/engine/metadata-modules/field-metadata/field-metadata.entity';
-import { ObjectStandardOverridesDTO } from 'src/engine/metadata-modules/object-metadata/dtos/object-standard-overrides.dto';
-import { UpdateObjectPayload } from 'src/engine/metadata-modules/object-metadata/dtos/update-object.input';
-import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
+import { type ObjectStandardOverridesDTO } from 'src/engine/metadata-modules/object-metadata/dtos/object-standard-overrides.dto';
+import { type UpdateObjectPayload } from 'src/engine/metadata-modules/object-metadata/dtos/update-object.input';
+import { type ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { ObjectMetadataService } from 'src/engine/metadata-modules/object-metadata/object-metadata.service';
 
 interface StandardObjectUpdate extends Partial<UpdateObjectPayload> {
@@ -29,12 +26,7 @@ interface StandardObjectUpdate extends Partial<UpdateObjectPayload> {
 export class BeforeUpdateOneObject<T extends UpdateObjectPayload>
   implements BeforeUpdateOneHook<T>
 {
-  constructor(
-    readonly objectMetadataService: ObjectMetadataService,
-    // TODO: Should not use the repository here
-    @InjectRepository(FieldMetadataEntity, 'core')
-    private readonly fieldMetadataRepository: Repository<FieldMetadataEntity>,
-  ) {}
+  constructor(readonly objectMetadataService: ObjectMetadataService) {}
 
   // TODO: this logic could be moved to a policy guard
   async run(
@@ -56,8 +48,6 @@ export class BeforeUpdateOneObject<T extends UpdateObjectPayload>
     if (!objectMetadata.isCustom) {
       return this.handleStandardObjectUpdate(instance, objectMetadata, locale);
     }
-
-    await this.validateIdentifierFields(instance, workspaceId);
 
     return instance;
   }
@@ -197,7 +187,7 @@ export class BeforeUpdateOneObject<T extends UpdateObjectPayload>
     update: StandardObjectUpdate;
     overrideKey: 'labelSingular' | 'labelPlural' | 'description' | 'icon';
     newValue: string;
-    originalValue: string;
+    originalValue: string | null;
     locale?: keyof typeof APP_LOCALES | undefined;
   }): boolean {
     if (locale && locale !== SOURCE_LOCALE) {
@@ -226,7 +216,7 @@ export class BeforeUpdateOneObject<T extends UpdateObjectPayload>
     update: StandardObjectUpdate,
     overrideKey: 'labelSingular' | 'labelPlural' | 'description' | 'icon',
     newValue: string,
-    originalValue: string,
+    originalValue: string | null,
     locale: keyof typeof APP_LOCALES,
   ): boolean {
     const messageId = generateMessageId(originalValue ?? '');
@@ -256,7 +246,7 @@ export class BeforeUpdateOneObject<T extends UpdateObjectPayload>
     update: StandardObjectUpdate,
     overrideKey: 'labelSingular' | 'labelPlural' | 'description' | 'icon',
     newValue: string,
-    originalValue: string,
+    originalValue: string | null,
   ): boolean {
     if (newValue !== originalValue) {
       return false;
@@ -436,57 +426,5 @@ export class BeforeUpdateOneObject<T extends UpdateObjectPayload>
       instance.update.labelPlural,
       locale,
     );
-  }
-
-  private async validateIdentifierFields(
-    instance: UpdateOneInputType<T>,
-    workspaceId: string,
-  ): Promise<void> {
-    if (
-      !instance.update.labelIdentifierFieldMetadataId &&
-      !instance.update.imageIdentifierFieldMetadataId
-    ) {
-      return;
-    }
-
-    const fields = await this.fieldMetadataRepository.findBy({
-      workspaceId: Equal(workspaceId),
-      objectMetadataId: Equal(instance.id.toString()),
-      id: In(
-        [
-          instance.update.labelIdentifierFieldMetadataId,
-          instance.update.imageIdentifierFieldMetadataId,
-        ].filter((id) => id !== null),
-      ),
-    });
-
-    const fieldIds = fields.map((field) => field.id);
-
-    this.validateLabelIdentifier(instance, fieldIds);
-    this.validateImageIdentifier(instance, fieldIds);
-  }
-
-  private validateLabelIdentifier(
-    instance: UpdateOneInputType<T>,
-    fieldIds: string[],
-  ): void {
-    if (
-      instance.update.labelIdentifierFieldMetadataId &&
-      !fieldIds.includes(instance.update.labelIdentifierFieldMetadataId)
-    ) {
-      throw new BadRequestException('This label identifier does not exist');
-    }
-  }
-
-  private validateImageIdentifier(
-    instance: UpdateOneInputType<T>,
-    fieldIds: string[],
-  ): void {
-    if (
-      instance.update.imageIdentifierFieldMetadataId &&
-      !fieldIds.includes(instance.update.imageIdentifierFieldMetadataId)
-    ) {
-      throw new BadRequestException('This image identifier does not exist');
-    }
   }
 }

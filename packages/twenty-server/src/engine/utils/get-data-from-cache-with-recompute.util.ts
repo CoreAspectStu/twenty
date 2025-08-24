@@ -1,10 +1,10 @@
-import { Logger } from '@nestjs/common';
+import { type Logger } from '@nestjs/common';
 
 import { isDefined } from 'twenty-shared/utils';
 
 import {
   TwentyORMException,
-  TwentyORMExceptionCode,
+  type TwentyORMExceptionCode,
 } from 'src/engine/twenty-orm/exceptions/twenty-orm.exception';
 
 type CacheResult<T, U> = {
@@ -24,10 +24,7 @@ const getFromCacheWithRecompute = async <T, U>({
   workspaceId: string;
   getCacheData: (workspaceId: string) => Promise<U | undefined>;
   getCacheVersion?: (workspaceId: string) => Promise<T | undefined>;
-  recomputeCache: (params: {
-    workspaceId: string;
-    ignoreLock?: boolean;
-  }) => Promise<void>;
+  recomputeCache: (params: { workspaceId: string }) => Promise<void>;
   cachedEntityName: string;
   exceptionCode: TwentyORMExceptionCode;
   logger: Logger;
@@ -54,7 +51,7 @@ const getFromCacheWithRecompute = async <T, U>({
         cachedData,
       },
     );
-    await recomputeCache({ workspaceId, ignoreLock: true });
+    await recomputeCache({ workspaceId });
 
     cachedData = await getCacheData(workspaceId);
     if (expectCacheVersion) {

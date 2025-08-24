@@ -1,6 +1,7 @@
 import { useRecoilCallback, useRecoilState, useSetRecoilState } from 'recoil';
 
 import { useIsLogged } from '@/auth/hooks/useIsLogged';
+import { availableWorkspacesState } from '@/auth/states/availableWorkspacesState';
 import { currentUserState } from '@/auth/states/currentUserState';
 import { currentUserWorkspaceState } from '@/auth/states/currentUserWorkspaceState';
 import { currentWorkspaceDeletedMembersState } from '@/auth/states/currentWorkspaceDeletedMembersStates';
@@ -18,18 +19,20 @@ import { getDateFormatFromWorkspaceDateFormat } from '@/localization/utils/getDa
 import { getTimeFormatFromWorkspaceTimeFormat } from '@/localization/utils/getTimeFormatFromWorkspaceTimeFormat';
 import { AppPath } from '@/types/AppPath';
 import { getDateFnsLocale } from '@/ui/field/display/utils/getDateFnsLocale.util';
-import { ColorScheme } from '@/workspace-member/types/WorkspaceMember';
+import { type ColorScheme } from '@/workspace-member/types/WorkspaceMember';
 import { enUS } from 'date-fns/locale';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { APP_LOCALES, SOURCE_LOCALE } from 'twenty-shared/translations';
+import { type APP_LOCALES, SOURCE_LOCALE } from 'twenty-shared/translations';
+import { type ObjectPermissions } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { WorkspaceMember } from '~/generated-metadata/graphql';
-import { useGetCurrentUserQuery } from '~/generated/graphql';
+import {
+  type WorkspaceMember,
+  useGetCurrentUserQuery,
+} from '~/generated-metadata/graphql';
 import { dateLocaleState } from '~/localization/states/dateLocaleState';
 import { dynamicActivate } from '~/utils/i18n/dynamicActivate';
 import { isMatchingLocation } from '~/utils/isMatchingLocation';
-import { availableWorkspacesState } from '@/auth/states/availableWorkspacesState';
 
 export const UserProviderEffect = () => {
   const location = useLocation();
@@ -91,11 +94,20 @@ export const UserProviderEffect = () => {
       setCurrentWorkspace({
         ...queryData.currentUser.currentWorkspace,
         defaultRole: queryData.currentUser.currentWorkspace.defaultRole ?? null,
+        defaultAgent:
+          queryData.currentUser.currentWorkspace.defaultAgent ?? null,
       });
     }
 
     if (isDefined(queryData.currentUser.currentUserWorkspace)) {
-      setCurrentUserWorkspace(queryData.currentUser.currentUserWorkspace);
+      setCurrentUserWorkspace({
+        ...queryData.currentUser.currentUserWorkspace,
+        objectPermissions:
+          (queryData.currentUser.currentUserWorkspace
+            .objectPermissions as Array<
+            ObjectPermissions & { objectMetadataId: string }
+          >) ?? [],
+      });
     }
 
     const {

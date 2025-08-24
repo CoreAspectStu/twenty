@@ -33,11 +33,19 @@ export const MESSAGE_CHANNEL_DATA_SEED_COLUMNS: (keyof MessageChannelDataSeed)[]
     'syncStage',
   ];
 
-export const MESSAGE_CHANNEL_DATA_SEED_IDS = {
-  TIM: '20202020-9b80-4c2c-a597-383db48de1d6',
-  JONY: '20202020-5ffe-4b32-814a-983d5e4911cd',
-  PHIL: '20202020-e2f1-49b5-85d2-5d3a3386990c',
+const GENERATE_MESSAGE_CHANNEL_IDS = (): Record<string, string> => {
+  const CHANNEL_IDS: Record<string, string> = {};
+
+  CHANNEL_IDS['TIM'] = '20202020-9b80-4c2c-a597-383db48de1d6';
+  CHANNEL_IDS['JONY'] = '20202020-5ffe-4b32-814a-983d5e4911cd';
+  CHANNEL_IDS['PHIL'] = '20202020-e2f1-49b5-85d2-5d3a3386990c';
+  CHANNEL_IDS['SUPPORT'] = '20202020-e2f1-49b5-85d2-5d3a3386990d';
+  CHANNEL_IDS['SALES'] = '20202020-e2f1-49b5-85d2-5d3a3386990e';
+
+  return CHANNEL_IDS;
 };
+
+export const MESSAGE_CHANNEL_DATA_SEED_IDS = GENERATE_MESSAGE_CHANNEL_IDS();
 
 export const MESSAGE_CHANNEL_DATA_SEEDS: MessageChannelDataSeed[] = [
   {
@@ -49,7 +57,7 @@ export const MESSAGE_CHANNEL_DATA_SEEDS: MessageChannelDataSeed[] = [
     type: 'email',
     connectedAccountId: CONNECTED_ACCOUNT_DATA_SEED_IDS.TIM,
     handle: 'tim@apple.dev',
-    isSyncEnabled: false,
+    isSyncEnabled: true,
     visibility: MessageChannelVisibility.SHARE_EVERYTHING,
     syncStage: MessageChannelSyncStage.FULL_MESSAGE_LIST_FETCH_PENDING,
   },
@@ -62,7 +70,7 @@ export const MESSAGE_CHANNEL_DATA_SEEDS: MessageChannelDataSeed[] = [
     type: 'email',
     connectedAccountId: CONNECTED_ACCOUNT_DATA_SEED_IDS.JONY,
     handle: 'jony.ive@apple.dev',
-    isSyncEnabled: false,
+    isSyncEnabled: true,
     visibility: MessageChannelVisibility.SHARE_EVERYTHING,
     syncStage: MessageChannelSyncStage.FULL_MESSAGE_LIST_FETCH_PENDING,
   },
@@ -75,7 +83,33 @@ export const MESSAGE_CHANNEL_DATA_SEEDS: MessageChannelDataSeed[] = [
     type: 'email',
     connectedAccountId: CONNECTED_ACCOUNT_DATA_SEED_IDS.PHIL,
     handle: 'phil.schiler@apple.dev',
-    isSyncEnabled: false,
+    isSyncEnabled: true,
+    visibility: MessageChannelVisibility.SHARE_EVERYTHING,
+    syncStage: MessageChannelSyncStage.FULL_MESSAGE_LIST_FETCH_PENDING,
+  },
+  {
+    id: MESSAGE_CHANNEL_DATA_SEED_IDS.SUPPORT,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    isContactAutoCreationEnabled: true,
+    type: 'email',
+    connectedAccountId: CONNECTED_ACCOUNT_DATA_SEED_IDS.TIM, // Use TIM's connected account for shared inbox
+    handle: 'support@apple.dev',
+    isSyncEnabled: true,
+    visibility: MessageChannelVisibility.SHARE_EVERYTHING,
+    syncStage: MessageChannelSyncStage.FULL_MESSAGE_LIST_FETCH_PENDING,
+  },
+  {
+    id: MESSAGE_CHANNEL_DATA_SEED_IDS.SALES,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    isContactAutoCreationEnabled: true,
+    type: 'email',
+    connectedAccountId: CONNECTED_ACCOUNT_DATA_SEED_IDS.TIM, // Use TIM's connected account for shared inbox
+    handle: 'sales@apple.dev',
+    isSyncEnabled: true,
     visibility: MessageChannelVisibility.SHARE_EVERYTHING,
     syncStage: MessageChannelSyncStage.FULL_MESSAGE_LIST_FETCH_PENDING,
   },

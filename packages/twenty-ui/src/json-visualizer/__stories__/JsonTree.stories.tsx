@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { type Meta, type StoryObj } from '@storybook/react';
 import {
   expect,
   fn,
@@ -571,6 +571,9 @@ export const RedHighlighting: Story = {
     value: {
       name: 'John Doe',
       age: 30,
+      address: {
+        city: 'Paris',
+      },
     },
     getNodeHighlighting: () => 'red',
   },
