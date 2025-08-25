@@ -7,7 +7,24 @@ services:
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
     expose:
-      - "3000"  # internal only; NOT published to host
+      - "3000"
+    networks:
+      - rcogwoks_net
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=rcogwoks0g04cko84o44k80k
+      # HTTP -> HTTPS redirect
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      # HTTP router
+      - traefik.http.routers.twentycrm-http.entrypoints=http
+      - traefik.http.routers.twentycrm-http.rule=Host(`crm.coreaspectai.com`)
+      - traefik.http.routers.twentycrm-http.middlewares=redirect-to-https
+      # HTTPS router
+      - traefik.http.routers.twentycrm-https.entrypoints=https
+      - traefik.http.routers.twentycrm-https.rule=Host(`crm.coreaspectai.com`)
+      - traefik.http.routers.twentycrm-https.tls=true
+      # Tell Traefik which port the app listens on
+      - traefik.http.services.twentycrm.loadbalancer.server.port=3000
     environment:
       NODE_PORT: 3000
       PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD:-postgres}@${PG_DATABASE_HOST:-db}:${PG_DATABASE_PORT:-5432}/default
@@ -22,7 +39,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:3000/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl --fail http://localhost:3000/healthz || wget -qO- http://localhost:3000/healthz >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -33,6 +50,8 @@ services:
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
     command: ["yarn", "worker:prod"]
+    networks:
+      - rcogwoks_net
     environment:
       PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD:-postgres}@${PG_DATABASE_HOST:-db}:${PG_DATABASE_PORT:-5432}/default
       SERVER_URL: ${SERVER_URL}
@@ -57,16 +76,16 @@ services:
     environment:
       POSTGRES_USER: ${PG_DATABASE_USER:-postgres}
       POSTGRES_PASSWORD: ${PG_DATABASE_PASSWORD:-postgres}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PG_DATABASE_USER:-postgres} -h localhost -d postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
     restart: always
 
   redis:
     image: redis
     restart: always
+
+networks:
+  rcogwoks_net:
+    external: true
+    name: rcogwoks0g04cko84o44k80k
 
 volumes:
   db-data:
