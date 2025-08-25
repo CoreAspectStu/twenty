@@ -13,17 +13,13 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=rcogwoks0g04cko84o44k80k
-      # HTTP -> HTTPS redirect
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-      # HTTP router
       - traefik.http.routers.twentycrm-http.entrypoints=http
       - traefik.http.routers.twentycrm-http.rule=Host(`crm.coreaspectai.com`)
       - traefik.http.routers.twentycrm-http.middlewares=redirect-to-https
-      # HTTPS router
       - traefik.http.routers.twentycrm-https.entrypoints=https
       - traefik.http.routers.twentycrm-https.rule=Host(`crm.coreaspectai.com`)
       - traefik.http.routers.twentycrm-https.tls=true
-      # Tell Traefik which port the app listens on
       - traefik.http.services.twentycrm.loadbalancer.server.port=3000
     environment:
       NODE_PORT: 3000
@@ -76,10 +72,22 @@ services:
     environment:
       POSTGRES_USER: ${PG_DATABASE_USER:-postgres}
       POSTGRES_PASSWORD: ${PG_DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_DATABASE_USER:-postgres} -h localhost -d ${POSTGRES_DB:-default} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     restart: always
 
   redis:
-    image: redis
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: always
 
 networks:
